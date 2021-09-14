@@ -2,12 +2,14 @@ module tb_fifo;
     reg clk = 0;
     always #5 clk = ~clk;
     reg resetn = 1;
+    reg enable = 1;
 
     reg [11:0] in_value = 0;
     wire [11:0] out_value;
     fifo #(.WIDTH(12), .LEN(10)) fifo_0(
         .clk(clk), 
-        .resetn(resetn), 
+        .resetn(resetn),
+        .enable(enable),
         .in(in_value), 
         .out(out_value)
         );
@@ -32,9 +34,11 @@ module tb_fifo;
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);
+        enable = 0;
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);
+        enable = 1;
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);
         #10 $display("out = %d at time %t", out_value, $time);

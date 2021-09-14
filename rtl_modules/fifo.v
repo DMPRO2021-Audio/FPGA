@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: NTNU TDT4295 Computer Project FALL21
-// Engineer: 
+// Engineer:
 // 
 // Create Date: 09/09/2021 01:37:17 PM
 // Design Name: 
@@ -9,7 +9,7 @@
 // Project Name: Audio Project - Synth
 // Target Devices: 
 // Tool Versions: 
-// Description: FIFO module created 
+// Description: FIFO module created for use in Comb filter
 // 
 // Dependencies: 
 // 
@@ -19,13 +19,14 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
+// TODO: Have an `enable` signal to allow pausing the propagation
 module fifo #(
     parameter WIDTH = 12, 
     parameter LEN = 2048
 )(
     input clk,
     input resetn,
+    input enable,
     input [WIDTH-1:0] in,
     output [WIDTH-1:0] out
 );
@@ -35,11 +36,19 @@ module fifo #(
     reg [WIDTH-1:0] queue[0:LEN-1];
 
     always @ (posedge(clk)) begin
-        queue[0] <= in;
-        for (i = 1; i < LEN; i = i + 1) begin
-            queue[i] <= queue[i-1];
+        if (enable) begin
+            queue[0] <= in;
+            for (i = 1; i < LEN; i = i + 1) begin
+                queue[i] <= queue[i-1];
+            end
         end
+        else
+            for (i = 0; i < LEN; i = i + 1) begin
+                queue[i] <= queue[i];
+            end
+`ifdef SIM
         for (i = 0; i < LEN; i = i + 1)
             $display("%d: %d", i, queue[i][WIDTH-1:0]);
+`endif
     end
 endmodule
