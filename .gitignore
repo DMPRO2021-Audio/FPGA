@@ -2,6 +2,11 @@
 .vscode/
 .metals/
 .Xil/
+*.cache/
+*.ip_user_files/
+*.runs
+*.sim
+*.xpr
 
 ### macOS ###
 # General
