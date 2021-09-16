@@ -7,6 +7,7 @@
 *.runs
 *.sim
 *.xpr
+*.hw
 
 ### macOS ###
 # General
@@ -34,3 +35,4 @@ design_output/
 # logs
 *.log
 *.jou
+*.pb
