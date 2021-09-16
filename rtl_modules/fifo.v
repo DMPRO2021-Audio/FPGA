@@ -19,7 +19,6 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Have an `enable` signal to allow pausing the propagation
 module fifo #(
     parameter WIDTH = 12, 
     parameter LEN = 2048
@@ -32,8 +31,8 @@ module fifo #(
 );
 
     integer i;
-    assign out = queue[LEN-1];
     reg [WIDTH-1:0] queue[0:LEN-1];
+    assign out = queue[LEN-1];
 
     always @ (posedge(clk)) begin
         if (enable) begin
