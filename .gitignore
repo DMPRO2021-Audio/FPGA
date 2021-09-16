@@ -1,6 +1,7 @@
 # IDEs
 .vscode/
 .metals/
+.Xil/
 
 ### macOS ###
 # General
@@ -21,3 +22,10 @@ $RECYCLE.BIN/
 *.elf
 target/
 build/
+design_output/
+
+*.out
+
+# logs
+*.log
+*.jou
