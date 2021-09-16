@@ -11,21 +11,18 @@
 // `irq`    - signal word transmitted/output valid
 
 module spi_slave #(parameter WIDTH = 32) (
-    input mosi,
-    output miso,
+    input wire mosi,
+    output wire miso,
 
-    input sclk,
-    input clk,
-    input csn,
+    input wire sclk, clk, csn,
 
-    output [WIDTH-1:0] recv,
-    input[WIDTH-1:0] send,
+    output wire[WIDTH-1:0] recv,
+    input wire[WIDTH-1:0] send,
 
-    output output_valid
+    output wire output_valid
 );
-    wire [WIDTH-1:0] out;
     reg rstn = 1;
-    wire output_valid;
+
     wire enable = ~csn;
     // SIPO for incomming data
     sipo_shift_register #(.WIDTH(WIDTH)) sipo0 (
@@ -47,8 +44,8 @@ module spi_slave #(parameter WIDTH = 32) (
     // );
 
     always @(posedge clk) begin
-        // TODO: Use internal clock to signal output ready
+        // TODO: Use internal clock to signal output
         //$display("recv = %d, output_valid = ", recv, output_valid);
-    end    
+    end
 
 endmodule
