@@ -2,6 +2,7 @@
 .vscode/
 .metals/
 .Xil/
+xsim.dir/
 *.cache/
 *.ip_user_files/
 *.runs
@@ -40,3 +41,4 @@ logs/
 *.log
 *.jou
 *.pb
+*.wdb

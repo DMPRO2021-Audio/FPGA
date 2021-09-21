@@ -45,8 +45,8 @@ module I2S_Transmitter
 
     reg [$clog2(WORD_SIZE) + 1:0] bit_counter;
     reg [2:0] state;
-    reg [WORD_SIZE:0] left_shift_reg;
-    reg [WORD_SIZE:0] right_shift_reg;
+    reg [WORD_SIZE-1:0] left_shift_reg;
+    reg [WORD_SIZE-1:0] right_shift_reg;
     reg lrclk_reg; 
 
     initial state = STATE_LOAD;

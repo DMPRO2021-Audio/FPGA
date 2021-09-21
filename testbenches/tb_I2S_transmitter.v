@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module tb_I2S_transmitter;
 
     reg clk;
@@ -29,9 +30,12 @@ module tb_I2S_transmitter;
         .sd(sd)
     );
 
-    always @ (edge lrclk) begin
-        if(lrclk) $display("Left = %h", out_reg);
-        if(!lrclk) $display("Right = %h", out_reg);
+    always @ (negedge lrclk) begin
+        $display("Right = %h", out_reg);
+    end
+
+    always @ (posedge lrclk) begin
+        $display("Left = %h", out_reg);
     end
     
     always @ (posedge sclk) begin
@@ -40,12 +44,20 @@ module tb_I2S_transmitter;
 
     initial begin
         #1000;
+        $display("Reset");
+
         nReset <= 0;
         left_data_in <= 24'h010101;
         right_data_in <= 24'h101010;
         #20;
         nReset <= 1;
-        #1010;
+
+        #40;
+
+        left_data_in <= 24'hffffff;
+        right_data_in <= 24'h000000;
+
+        #2010;
         $finish;
     end
 
