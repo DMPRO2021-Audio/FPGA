@@ -42,3 +42,4 @@ logs/
 *.jou
 *.pb
 *.wdb
+*.vcd
