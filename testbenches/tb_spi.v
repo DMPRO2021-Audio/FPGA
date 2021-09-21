@@ -1,7 +1,10 @@
 module tb_spi;
 
     reg clk = 0;
+    reg sclk = 0;
+    /* verilator lint_off STMTDLY */
     always #5 clk <= ~clk;
+    always #8 sclk <= ~sclk;
 
     reg csn = 1;
     reg mosi;
@@ -16,7 +19,7 @@ module tb_spi;
 
 
     spi_slave #(.WIDTH(8)) spi0 (
-        .sclk(clk),
+        .sclk(sclk),
         .clk(clk),
         .mosi(mosi),
         .miso(miso),
@@ -32,15 +35,23 @@ module tb_spi;
         csn <= 0;
         for (i = 0; i < 8; i = i + 1) begin
             mosi <= msg[i];
-            #10 $display("Sent bit %d. out = %d, output_valid = ", msg[i], out, output_valid);
+            #16 $display("Sent bit %d. out = %d, output_valid = ", msg[i], out, output_valid);
         end
         $display("Message sent. out = %d, output_valid = ", out, output_valid);
         csn <= 1;
-        #10 $display("Message sent. out = %d, output_valid = ", out, output_valid);
-        #10 $display("Message sent. out = %d, output_valid = ", out, output_valid);
-        #10 $display("Message sent. out = %d, output_valid = ", out, output_valid);
+        #16 $display("Message sent. out = %d, output_valid = ", out, output_valid);
+        #16 $display("Message sent. out = %d, output_valid = ", out, output_valid);
+        #16 $display("Message sent. out = %d, output_valid = ", out, output_valid);
 
         #5 $finish;
+    end
+
+    integer ii;
+
+    initial begin
+        for (ii = 0; ii < 20; ii = ii + 1) begin
+            #10 $display("clk. output_valid = %d, out = %d", output_valid, out);
+        end
     end
 
 endmodule
