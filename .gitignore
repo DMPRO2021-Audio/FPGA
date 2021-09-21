@@ -9,6 +9,9 @@
 *.xpr
 *.hw
 
+# spyware
+*webtalk*
+
 ### macOS ###
 # General
 .DS_Store
