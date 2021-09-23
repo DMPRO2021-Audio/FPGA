@@ -1,12 +1,13 @@
 
 // Serial in Parallel out shift register
 //  Signals output_valid on the clock cycle
-//  when the out register is full.
+//  when the out register is full. Receices
+//  LSB first.
 // - parameter WIDTH: Size of register
 
 module sipo_shift_register #(parameter WIDTH = 32) (
     input in,
-    output reg [WIDTH-1:0] out = 0,
+    output reg [WIDTH-1:0] out,
     output output_valid,
     input clk, rstn, enable
 );

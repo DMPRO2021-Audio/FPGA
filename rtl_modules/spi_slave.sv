@@ -21,6 +21,9 @@ module spi_slave #(parameter WIDTH = 32) (
 
     output wire output_valid
 );
+
+    assign miso = 1;
+    
     reg rstn = 1;
 
     wire enable = ~csn;

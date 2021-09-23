@@ -1,6 +1,8 @@
 # Program device
+puts "ILAs:"
+puts [get_hw_ilas]
 
-set outputDir ./design_output
+set output_dir [lindex $argv 2]
 open_hw_manager
 
 # Connect to Digilent Cable on localhost
@@ -15,7 +17,11 @@ open_hw_target
 current_hw_device [lindex [get_hw_devices] 0]
 refresh_hw_device -update_hw_probes false [lindex [get_hw_devices] 0]
 
-set_property -force PROGRAM.FILE {${design_output}/program.bit} [lindex [get_hw_devices] 0]
+set_property PROGRAM.FILE $output_dir/program.bit [lindex [get_hw_devices] 0]
 
 program_hw_devices [lindex [get_hw_devices] 0]
 refresh_hw_device [lindex [get_hw_devices] 0]
+
+
+# upload_hw_ila_data
+# write_debug_probes

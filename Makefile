@@ -11,7 +11,6 @@ TCL_ARGS = \
 	$(OUTPUT_DIR)
 
 all:
-	
 	-mkdir -p $(OUTPUT_DIR)
 	-mkdir -p $(SYNTH_DIR)
 	vivado \
@@ -21,9 +20,8 @@ all:
 		-log $(SYNTH_DIR)/vivado_build.log \
 		-tclargs $(TCL_ARGS) \
 		-tempDir $(TEMP_DIR)
-	-rm usage_statistics*
 
-program:
+flash: $(OUTPUT_DIR)/program.bit
 	-mkdir -p $(FLASH_DIR)
 	vivado \
 		-mode batch \
@@ -32,7 +30,6 @@ program:
 		-log $(FLASH_DIR)/vivado_program_$(shell date +"%y%m%d%H%M").log \
 		-tclargs $(TCL_ARGS) \
 		-tempDir $(TEMP_DIR)
-	-rm usage_statistics*
 	
 purge:
 	-rm -rf design_output logs usage_statistics*

@@ -7,12 +7,14 @@ set design_name [lindex $argv 0]
 # Get output directory from arguments
 set output_dir [lindex $argv 2]
 
-# Assemble project
+### Assemble project ###
 
-# Sources
+# ! Add sources here
 read_verilog [glob ./rtl_modules/shift_registers/sipo_register.v]
-read_verilog [glob ./rtl_modules/spi_slave.v]
-read_verilog [glob ./rtl_modules/top.v]
+read_verilog -sv [glob ./rtl_modules/spi_slave.sv]
+read_verilog -sv [glob ./rtl_modules/top.sv]
+
+# ! 
 
 # Board constaints file
 read_xdc ./constraints/Arty-A7-35-Master.xdc
@@ -22,7 +24,7 @@ set_property SEVERITY {Warning} [get_drc_checks NSTD-1]
 set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 
 
-# Synthesis and implementation
+### Synthesis and implementation ###
 
 set ARTYA735T "xc7a35ticsg324-1L"
 
@@ -47,7 +49,7 @@ route_design
 write_checkpoint -force $output_dir/post_place
 
 
-# Generate reports
+### Generate reports ###
 
 report_timing_summary -file $output_dir/post_route_timing_summary.rpt
 report_timing -sort_by group -max_paths 100 -path_type summary -file $output_dir/post_route_timing.rpt
@@ -57,6 +59,6 @@ write_verilog -force $output_dir/post_impl_netlist.v
 write_xdc -no_fixed_only -force $output_dir/post_impl.xdc
 
 
-# Generate bitstream
+### Generate bitstream ###
 
 write_bitstream -force -file $output_dir/program.bit
