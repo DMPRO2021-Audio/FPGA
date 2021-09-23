@@ -4,20 +4,23 @@
 
 # Get design name from arguments
 set design_name [lindex $argv 0]
+set source_dir [lindex $argv 1]
+set constr_dir [lindex $argv 2]
+set synth_dir [lindex $argv 3]
 # Get output directory from arguments
-set output_dir [lindex $argv 2]
+set output_dir [lindex $argv 4]
 
 ### Assemble project ###
 
 # ! Add sources here
-read_verilog [glob ./rtl_modules/shift_registers/sipo_register.v]
-read_verilog -sv [glob ./rtl_modules/spi_slave.sv]
-read_verilog -sv [glob ./rtl_modules/top.sv]
+read_verilog [glob $source_dir/shift_registers/sipo_register.v]
+read_verilog -sv [glob $source_dir/spi_slave.sv]
+read_verilog -sv [glob $source_dir/top.sv]
 
 # ! 
 
 # Board constaints file
-read_xdc ./constraints/Arty-A7-35-Master.xdc
+read_xdc $constr_dir/Arty-A7-35-Master.xdc
 
 # Other constraints
 set_property SEVERITY {Warning} [get_drc_checks NSTD-1]

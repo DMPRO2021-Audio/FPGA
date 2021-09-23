@@ -2,7 +2,7 @@
 puts "ILAs:"
 puts [get_hw_ilas]
 
-set output_dir [lindex $argv 2]
+set output_dir [lindex $argv 4]
 open_hw_manager
 
 # Connect to Digilent Cable on localhost
