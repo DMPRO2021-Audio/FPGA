@@ -11,6 +11,9 @@ create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { C
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets ck_sck_IBUF]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets led1_r_OBUF]
 
+# Debug
+set_property MARK_DEBUG true [get_nets [list {led}]]
+
 ## Switches
 #set_property -dict { PACKAGE_PIN A8    IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]; #IO_L12N_T1_MRCC_16 Sch=sw[0]
 #set_property -dict { PACKAGE_PIN C11   IOSTANDARD LVCMOS33 } [get_ports { sw[1] }]; #IO_L13P_T2_MRCC_16 Sch=sw[1]
