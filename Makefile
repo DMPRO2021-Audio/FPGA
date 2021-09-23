@@ -12,7 +12,8 @@ TCL_ARGS = \
 	$(SOURCE_DIR) \
 	$(CONSTR_DIR) \
 	$(SYNTH_DIR) \
-	$(OUTPUT_DIR)
+	$(OUTPUT_DIR) \
+	$(SYNTH_ONLY)
 
 all:
 	-mkdir -p $(OUTPUT_DIR)

@@ -14,7 +14,7 @@ module top(
 
     input [3:0] btn,
 
-    output [3:0] led,
+    (* mark_debug="true" *) output [3:0] led,
     output led0_b, led1_r, led2_r, led3_r
 );
     // assign led[3:0] = 4'b1010;

@@ -9,7 +9,8 @@
 // Project Name: Audio Project - Synth
 // Target Devices: 
 // Tool Versions: 
-// Description: FIFO module created for use in Comb filter
+// Description: FIFO buffer module created for use in Comb filter. A value inserted
+// will be assigned to out after LEN clock cycles of enable signal high.
 // 
 // Dependencies: 
 // 
@@ -19,34 +20,35 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module fifo #(
+module fifo_delay #(
     parameter WIDTH = 12, 
     parameter LEN = 2048
 )(
     input clk,
-    input resetn,
+    input rstn,
     input enable,
     input [WIDTH-1:0] in,
     output [WIDTH-1:0] out
 );
 
-    integer i;
-    reg [WIDTH-1:0] queue[0:LEN-1];
+    logic [WIDTH-1:0] queue[0:LEN-1];
+
     assign out = queue[LEN-1];
 
-    always @ (posedge(clk)) begin
+    always_ff @ (posedge clk) begin
+        if (!rstn) queue <= '{default:0};
         if (enable) begin
             queue[0] <= in;
-            for (i = 1; i < LEN; i = i + 1) begin
+            for (int i = 1; i < LEN; i = i + 1) begin
                 queue[i] <= queue[i-1];
             end
         end
         else
-            for (i = 0; i < LEN; i = i + 1) begin
+            for (int i = 0; i < LEN; i = i + 1) begin
                 queue[i] <= queue[i];
             end
-`ifdef SIM
-        for (i = 0; i < LEN; i = i + 1)
+`ifdef DEBUG
+        for (int i = 0; i < LEN; i = i + 1)
             $display("%d: %d", i, queue[i][WIDTH-1:0]);
 `endif
     end
