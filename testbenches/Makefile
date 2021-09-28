@@ -21,3 +21,9 @@ clean_win:
 	del /q *.log
 	del /q *.pb
 	del /q *.wdb
+
+
+tb_top: tb_top.sv ../rtl_modules/top.v ../rtl_modules/spi_slave.v ../rtl_modules/shift_registers/sipo_register.v ../rtl_modules/fifo.v
+	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log 
+	xelab -O0 -debug typical tb_top -s top_sim -nolog
+	xsim top_sim -R -nolog
