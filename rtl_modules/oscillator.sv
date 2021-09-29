@@ -19,7 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-`define SAMPLE_RATE 44100
+`include "constants.svh"
+
 `define MIN_FREQUENCY 20
 `define SAMPLES_PER_PERIOD(FREQ) `SAMPLE_RATE / FREQ
 `define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
