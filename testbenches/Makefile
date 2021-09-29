@@ -1,3 +1,12 @@
+
+SRC = ../rtl_modules
+
+INCLUDES = --include $(SRC)/include
+
+ifndef OPT
+	OPT=0
+endif
+
 tb_fifo: tb_fifo.v ../rtl_modules/fifo.v
 	xvlog $^ -O0 -nolog
 	xelab -debug typical tb_fifo -s fifo_sim -nolog
@@ -23,6 +32,21 @@ tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv
 	xelab -O0 -debug typical tb_oscillator -s oscillator_sim -nolog
 	xsim oscillator_sim -R -nolog
 
+tb_top: tb_top.sv ../rtl_modules/top.v ../rtl_modules/spi_slave.v ../rtl_modules/shift_registers/sipo_register.v ../rtl_modules/fifo.v
+	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log 
+	xelab -O$(OPT) -debug typical tb_top -s top_sim -nolog
+	xsim top_sim -R -nolog
+
+tb_control_unit: $(SRC)/structures_pkg.sv $(SRC)/control_unit.sv
+	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log
+	xelab -O$(OPT) -debug typical tb_control_unit -s control_unit_sim -nolog
+	xsim  control_unit_sim -R -nolog
+
+help:
+	-echo "Testbenches makefile"
+	-echo "========================================================="
+	-echo "OPT=[0-3]	Set optimization level (OPT='$(OPT)')"
+
 .PHONY:
 clean_win:
 	rmdir /s /q xsim.dir
@@ -32,8 +56,3 @@ clean_win:
 	del /q *.pb
 	del /q *.wdb
 
-
-tb_top: tb_top.sv ../rtl_modules/top.v ../rtl_modules/spi_slave.v ../rtl_modules/shift_registers/sipo_register.v ../rtl_modules/fifo.v
-	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log 
-	xelab -O0 -debug typical tb_top -s top_sim -nolog
-	xsim top_sim -R -nolog
