@@ -6,28 +6,34 @@
 // - parameter WIDTH: Size of register
 
 module sipo_shift_register #(parameter WIDTH = 32) (
-    input in,
+    input logic in,
     output logic [WIDTH-1:0] out,
-    output output_valid,
+    output logic output_valid,
     input clk, rstn, enable
 );
     logic [7:0] counter = 0;
 
-    assign output_valid = enable && !counter; //(0 == WIDTH - counter) ? 1 : 0;
+    //assign output_valid = !(WIDTH - counter - 1) && enable;// enable && !counter; //
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!rstn) begin
             out <= 0;
             counter <= 0;
+            output_valid <= 0;
         end
         else begin
             if (enable) begin
 `ifdef DEBUG
-                $display("shift in %d. counter = %d", in, counter);
+                $display("[sipo] shift in %d. counter = %d. output_valid = %d. out = %02x", in, counter, output_valid, out);
 `endif
                 out[WIDTH-1] <= in;
                 for (int i = WIDTH - 1; i > 0; i = i - 1) begin
                     out[i-1] <= out[i];
+                end
+                if (counter + 1 == WIDTH) begin
+                    output_valid <= 1;
+                end else begin
+                    output_valid <= 0;
                 end
                 counter <= (counter + 1) % WIDTH;
             end
