@@ -43,13 +43,15 @@ module fifo_delay #(
                 queue[i] <= queue[i-1];
             end
         end
-        else
+        else begin
             for (int i = 0; i < LEN; i = i + 1) begin
                 queue[i] <= queue[i];
             end
+        end
 `ifdef DEBUG
-        for (int i = 0; i < LEN; i = i + 1)
-            $display("%d: %d", i, queue[i][WIDTH-1:0]);
+        for (int i = 0; i < LEN; i = i + 1) begin
+            $display("[fifod] %d: %d", i, queue[i][WIDTH-1:0]);
+        end
 `endif
     end
 endmodule
