@@ -1,13 +1,13 @@
 `timescale 1ns / 1ps
 
-`define SAMPLE_RATE 44100
-`define MIN_FREQUENCY 20
-`define SAMPLES_PER_PERIOD(FREQ) `SAMPLE_RATE / FREQ
+`define SAMPLE_RATE 48000
+`define MIN_FREQUENCY 16
+`define MAX_AMPLITUDE ((1 << WIDTH) - 1)
 `define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
 
 package shape_pkg;
     typedef enum logic [1:0]{
-        SAWTOOTH,
+        SAWTOOTH,       
         SQUARE,         
         SIN,           
         SAMPLE_NAME     // Not implemented, this can be any sample
@@ -21,7 +21,7 @@ module oscillator
     WIDTH = 24
 )
 (
-    input clk,                  // Assuming sample frequency of 44.1 Khz
+    input clk,                  // Clock should be of the sampling frequency
     input enable,               // Generate audio signal, else output is 0
     input [15:0] freq,          // Frequency of the oscillator in Hz
     input [WIDTH-1:0] amplitude,
@@ -30,33 +30,31 @@ module oscillator
     output [WIDTH-1:0] out
 );
 
-    reg[12:0] phase = 0;
+    reg[$clog2(`SAMPLE_RATE):0] sample_index = 0; // The sample is indexed from 0 to MAX_SAMPLES_PER_PERIOD
     reg[WIDTH-1:0] out_val = 0;
     assign out = out_val;
 
     reg [WIDTH * 2 -1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
 
     // This lookuptable contains the sin values at the maximum amplitude
-    // to maintain as much  detail as possible in the sample
-    initial $readmemh("sin_lut.txt", sin_lut);
+    // to maintain as much detail as possible in the sample
+    initial $readmemh("../lookup_tables/sin_lut.txt", sin_lut);
 
     always @ (posedge(clk)) begin
 
-        //$display("SHAPE = %s", shape.name());
-
         if(enable) begin
-            // 44100 / freq = Samples per period
-            phase <= (phase + 1) % (`SAMPLES_PER_PERIOD(freq));
+
+            sample_index <= (sample_index + freq) % `SAMPLE_RATE;
 
             case(shape)
                 SAWTOOTH: begin
-                    out_val <= phase * amplitude * freq / `SAMPLE_RATE;
+                    out_val <= (`MAX_AMPLITUDE / `SAMPLE_RATE) * sample_index;
                 end
                 SQUARE: begin
-                    out_val <= phase * 2 > `SAMPLES_PER_PERIOD(freq) ? 0 : amplitude;
+                    out_val <= sample_index > (`SAMPLE_RATE >> 1) ? 0 : `MAX_AMPLITUDE;
                 end
                 SIN: begin
-                    out_val <= (sin_lut[phase * (freq / `MIN_FREQUENCY)] * amplitude) >> WIDTH;
+                    out_val <= sin_lut[sample_index >> 4]; // Divide by MIN_FREQUENCY
                 end
                 SAMPLE_NAME: begin
                     out_val <= 0;
@@ -64,8 +62,8 @@ module oscillator
             endcase
         end else begin
             out_val <= 0;
+            sample_index <= 0;
         end
 
-        $display("%d", out_val);
     end
 endmodule

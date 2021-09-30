@@ -21,13 +21,15 @@ tb_sipo: tb_sipo.sv ../rtl_modules/shift_registers/sipo_register.sv
 tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv 
 	xvlog $^ -nolog -sv
 	xelab -O0 -debug typical tb_oscillator -s oscillator_sim -nolog
+	mkdir test_output
 	xsim oscillator_sim -R -nolog
 
 .PHONY:
-clean_win:
-	rmdir /s /q xsim.dir
-	rmdir /s /q .Xil
-	del /q *.jou
-	del /q *.log
-	del /q *.pb
-	del /q *.wdb
+clean:
+	-rm -r xsim.dir
+	-rm -r .Xil
+	-rm -r test_output
+	-rm *.jou
+	-rm *.log
+	-rm *.pb
+	-rm *.wdb
