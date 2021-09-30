@@ -15,7 +15,7 @@ module top(
     input [3:0] btn,
 
     (* mark_debug="true" *) output [3:0] led,
-    output led0_b, led1_r, led2_r, led3_r
+    output [3:0] led_r, led_g, led_b
 );
     // assign led[3:0] = 4'b1010;
     wire clk = CLK100MHZ;   // Rename clock
@@ -26,10 +26,10 @@ module top(
     wire output_valid;
 
     assign led = led_val;
-    assign led3_r = 1;
-    assign led2_r = output_valid;
-    assign led1_r = ck_sck_reg;
-    assign led0_b = ~ck_ss | btn[0]; // Turn on when receiving
+    assign led_r[3] = 1;
+    assign led_r[2] = output_valid;
+    assign led_r[1] = ck_sck_reg;
+    assign led_b[0] = ~ck_ss | btn[0]; // Turn on when receiving
 
     spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (
         .mosi(ck_mosi),

@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "constants.svh"
+
 `define SAMPLE_RATE 48000
 `define MIN_FREQUENCY 16
 `define MAX_AMPLITUDE ((1 << WIDTH) - 1)
@@ -21,7 +23,7 @@ module oscillator
     WIDTH = 24
 )
 (
-    input clk,                  // Clock should be of the sampling frequency
+    input clk,                  // Clock should be of the sam the  frequency
     input enable,               // Generate audio signal, else output is 0
     input [15:0] freq,          // Frequency of the oscillator in Hz
     input [WIDTH-1:0] amplitude,
@@ -62,7 +64,7 @@ module oscillator
             endcase
         end else begin
             out_val <= 0;
-            sample_index <= 0;
+            sample_index <= 0; 
         end
 
     end
