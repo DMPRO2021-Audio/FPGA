@@ -33,6 +33,7 @@ module tb_oscillator;
 
     always @ (posedge clk)begin
         $fwrite(fd, "%d\n", out);
+        amplitude <= amplitude + 100;
     end
 
     initial begin

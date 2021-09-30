@@ -2,7 +2,6 @@
 
 `include "constants.svh"
 
-`define SAMPLE_RATE 48000
 `define MIN_FREQUENCY 16
 `define MAX_AMPLITUDE ((1 << WIDTH) - 1)
 `define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
@@ -33,10 +32,11 @@ module oscillator
 );
 
     reg[$clog2(`SAMPLE_RATE):0] sample_index = 0; // The sample is indexed from 0 to MAX_SAMPLES_PER_PERIOD
-    reg[WIDTH-1:0] out_val = 0;
-    assign out = out_val;
+    reg[WIDTH*2-1:0] out_val = 0;
+    
+    assign out = ((out_val * amplitude) / `MAX_AMPLITUDE);
 
-    reg [WIDTH * 2 -1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
+    reg [(WIDTH*2)-1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
 
     // This lookuptable contains the sin values at the maximum amplitude
     // to maintain as much detail as possible in the sample

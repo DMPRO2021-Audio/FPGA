@@ -18,10 +18,10 @@ tb_sipo: tb_sipo.sv ../rtl_modules/shift_registers/sipo_register.sv
 	xelab -O0 -debug typical tb_sipo -s sipo_sim -nolog
 	xsim sipo_sim -R -nolog
 
-tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv 
+tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv
 	xvlog $^ -nolog -sv
 	xelab -O0 -debug typical tb_oscillator -s oscillator_sim -nolog
-	mkdir test_output
+	mkdir -p test_output
 	xsim oscillator_sim -R -nolog
 
 .PHONY:
