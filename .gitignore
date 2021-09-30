@@ -37,6 +37,7 @@ design_output/
 *.out
 
 # logs
+test_output/
 logs/
 *.log
 *.jou
