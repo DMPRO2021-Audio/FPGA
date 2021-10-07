@@ -25,14 +25,6 @@
 `define SAMPLES_PER_PERIOD(FREQ) `SAMPLE_RATE / FREQ
 `define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
 
-package shape_pkg;
-    typedef enum logic [1:0]{
-        SAWTOOTH,
-        SQUARE,         
-        SIN,           
-        SAMPLE_NAME     // Not implemented, this can be any sample
-    } wave_shape;
-endpackage
 
 import shape_pkg::*;
 
