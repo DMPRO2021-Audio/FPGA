@@ -1,7 +1,7 @@
 
 // Serial in Parallel out shift register
 //  Signals output_valid on the clock cycle
-//  when the out register is full. Receices
+//  when the out register is full. Recieves
 //  LSB first.
 // - parameter WIDTH: Size of register
 
