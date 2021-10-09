@@ -1,7 +1,7 @@
 
 SRC = ../rtl_modules
 
-INCLUDES = --include $(SRC)/include
+INCLUDES = --include $(SRC)
 
 ifndef OPT
 	OPT=0
@@ -32,15 +32,26 @@ tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv
 	xelab -O0 -debug typical tb_oscillator -s oscillator_sim -nolog
 	xsim oscillator_sim -R -nolog
 
-tb_top: tb_top.sv ../rtl_modules/top.v ../rtl_modules/spi_slave.v ../rtl_modules/shift_registers/sipo_register.v ../rtl_modules/fifo.v
-	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log 
-	xelab -O$(OPT) -debug typical tb_top -s top_sim -nolog
-	xsim top_sim -R -nolog
+TOP_SRC = \
+	$(SRC)/structures_pkg.sv \
+	$(SRC)/control_unit.sv \
+	$(SRC)/spi_slave.sv \
+	$(SRC)/shift_registers/sipo_register.sv \
+	$(SRC)/fifo_delay.sv \
+	$(SRC)/top.sv
+
+TOP_SDB = $(patsubst ../rtl_modules/%.sv, xsim.dir/work/%.sdb, $(TOP_SRC))
+
+tb_top: tb_top.sv $(TOP_SRC)
+	echo $(TOP_SDB)
+	xvlog --sv $(INCLUDES) $^ -d DEBUG=1 --log ../logs/xvlog.log 
+	xelab -O$(OPT) -debug typical tb_top -s top_sim --log ../logs/xelab.log
+	xsim top_sim -R --log ../logs/xsim.log
 
 tb_control_unit: $(SRC)/structures_pkg.sv $(SRC)/control_unit.sv
 	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log
-	xelab -O$(OPT) -debug typical tb_control_unit -s control_unit_sim -nolog
-	xsim  control_unit_sim -R -nolog
+	# xelab -O$(OPT) -debug typical control_unit -s control_unit_sim -nolog
+	# xsim  control_unit_sim -R -nolog
 
 help:
 	-echo "Testbenches makefile"
