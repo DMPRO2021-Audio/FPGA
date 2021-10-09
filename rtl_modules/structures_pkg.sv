@@ -44,4 +44,24 @@ package protocol_pkg;
         end
     endfunction
 
+    function void print_synth_t(input synth_t synth);
+        $display("synth_t {");
+        $display("\t.reverb: %x", synth.reverb);
+        $display("\t.volume: %x", synth.volume);
+        for (int i = 0; i < `N_OSCILLATORS; i++) begin
+            $display("\t.wave_gens[%02d]: wavegen_t {", i);
+            $display("\t\t.freq: %x", synth.wave_gens[i].freq);
+            $display("\t\t.shape: %x", synth.wave_gens[i].shape);
+            $display("\t\t.envelopes: [");
+            for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
+                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
+                    synth.wave_gens[i].envelopes[ii].rate, 
+                    synth.wave_gens[i].envelopes[ii].duration);
+            end
+            $display("\t\t]");
+            $display("\t}");
+        end
+        $display("}");
+    endfunction
+
 endpackage
