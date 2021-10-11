@@ -83,6 +83,8 @@ parameter WORD = 32                 // Word size
                 print_synth_t(synth_t'(buffer));
             end
             else begin
+                /* Cast to synth_t struct. Might have to be done as an explicit function due to
+                byte alignment e.g. of enums in structure sent from mcu */
                 conf <= synth_t'(buffer);
             end
         end
