@@ -25,9 +25,13 @@ read_verilog -sv [glob $source_dir/fifo_delay.sv]
 read_verilog -sv [glob $source_dir/constants.svh]
 read_verilog -sv [glob $source_dir/control_unit.sv]
 read_verilog -sv [glob $source_dir/oscillator.sv]
+read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]
 
 # ! top is loaded last
 read_verilog -sv [glob $source_dir/top.sv]
+
+add_files [glob $source_dir/../lookup_tables/*]
+# ! 
 
 # Board constaints file
 read_xdc $constr_dir/Arty-A7-35-Master.xdc

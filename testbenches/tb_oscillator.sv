@@ -14,7 +14,7 @@ module tb_oscillator;
 
     initial amplitude = 4000;
     initial freq = 400;
-    initial shape = SIN;
+    initial shape = SAWTOOTH;
     initial enable = 1;
     initial clk = 0;
 
@@ -29,24 +29,25 @@ module tb_oscillator;
         .out(out)
     );
 
+    int fd;
+
+    always @ (posedge clk)begin
+        $fwrite(fd, "%d\n", out);
+        amplitude <= amplitude + 100;
+    end
+
     initial begin
-        #10000;
-
-        freq <= 880;
-
-        #10000;
-
-        amplitude <= 1000;
+        
+        fd = $fopen("./test_output/oscillator.txt", "w+");
 
         #10000;
-
-        shape <= SQUARE;
-
+       shape <= SIN;
+        #10000;
+       freq <= 880;
         #10000;
 
-        shape <= SAWTOOTH;
+        $fclose(fd);
 
-        #10000;
         $finish;
     end
 

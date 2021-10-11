@@ -1,23 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: NTNU TDT4295 Computer Project FALL21
-// Engineer: 
-// 
-// Create Date: 09.09.2021 13:11:27
-// Design Name: 
-// Module Name: I2S - transmitter
-// Project Name: Audio project - Synth
-// Target Devices: 
-// Tool Versions: 
-// Description: I2S module for sending two data streams, left and right.
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
 /*
     Based on the following design:

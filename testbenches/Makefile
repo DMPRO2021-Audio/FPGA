@@ -27,9 +27,10 @@ tb_sipo: tb_sipo.sv ../rtl_modules/shift_registers/sipo_register.sv
 	xelab -O0 -debug typical tb_sipo -s sipo_sim -nolog
 	xsim sipo_sim -R -nolog
 
-tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv 
+tb_oscillator: ../rtl_modules/oscillator.sv tb_oscillator.sv
 	xvlog $^ -nolog -sv
 	xelab -O0 -debug typical tb_oscillator -s oscillator_sim -nolog
+	mkdir -p test_output
 	xsim oscillator_sim -R -nolog
 
 TOP_SRC = \
@@ -67,3 +68,11 @@ clean_win:
 	del /q *.pb
 	del /q *.wdb
 
+clean:
+	-rm -r xsim.dir
+	-rm -r .Xil
+	-rm -r test_output
+	-rm *.jou
+	-rm *.log
+	-rm *.pb
+	-rm *.wdb
