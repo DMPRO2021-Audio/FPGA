@@ -33,6 +33,7 @@ $RECYCLE.BIN/
 target/
 build/
 design_output/
+.svlint.toml
 
 *.out
 
