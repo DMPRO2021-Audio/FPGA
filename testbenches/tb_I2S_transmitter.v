@@ -20,9 +20,9 @@ module tb_I2S_transmitter;
 
     always #10 clk = ~clk;
 
-    I2S_Transmitter #(.WORD_SIZE(24)) transmitter(
+    I2S_Transmitter #(.WIDTH(24)) transmitter(
         .clk(clk),
-        .nReset(nReset),
+        .enable(1'b1),
         .left_data(left_data_in),
         .right_data(right_data_in),
         .sclk(sclk),
@@ -30,11 +30,11 @@ module tb_I2S_transmitter;
         .sd(sd)
     );
 
-    always @ (negedge lrclk) begin
+    always @ (posedge lrclk) begin
         $display("Right = %h", out_reg);
     end
 
-    always @ (posedge lrclk) begin
+    always @ (negedge lrclk) begin
         $display("Left = %h", out_reg);
     end
     
@@ -43,19 +43,10 @@ module tb_I2S_transmitter;
     end
 
     initial begin
-        #1000;
-        $display("Reset");
+        #960;
 
-        nReset <= 0;
         left_data_in <= 24'h010101;
         right_data_in <= 24'h101010;
-        #20;
-        nReset <= 1;
-
-        #40;
-
-        left_data_in <= 24'hffffff;
-        right_data_in <= 24'h000000;
 
         #2010;
         $finish;
