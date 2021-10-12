@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `include "constants.svh"
 
 package shape_pkg;
@@ -100,6 +101,22 @@ package protocol_pkg;
             $display("\t}");
         end
         $display("}");
+    endfunction
+
+    function print_wavegen_t(input wavegen_t wavegen);
+            $display("\t.wavegen_t {");
+            $display("\t\t.freq: %x", wavegen.freq);
+            $display("\t\t.velocity: %x", wavegen.velocity);
+            $display("\t\t.shape: %x", wavegen.shape);
+            $display("\t\t.cmds: %x", wavegen.cmds);
+            $display("\t\t.envelopes: [");
+            for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
+                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
+                    wavegen.envelopes[ii].rate, 
+                    wavegen.envelopes[ii].duration);
+            end
+            $display("\t\t]");
+            $display("\t}");
     endfunction
 
 endpackage
