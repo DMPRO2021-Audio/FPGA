@@ -11,22 +11,27 @@
 // `irq`    - signal word transmitted/output valid
 
 module spi_slave #(parameter WIDTH = 32) (
-    input wire mosi,
-    output wire miso,
+    input logic mosi,
+    output logic miso,
 
-    input wire sclk, clk, csn,
+    input sclk, clk, csn,
 
-    output wire[WIDTH-1:0] recv,
-    input wire[WIDTH-1:0] send,
+    output logic [WIDTH-1:0] recv,
+    input logic [WIDTH-1:0] send,
 
-    output wire output_valid
+    output logic output_valid
 );
 
     assign miso = 1;
-    
-    reg rstn = 1;
 
-    wire enable = ~csn;
+    logic rstn = 1;
+
+    logic read = 0;
+    logic reg_output_valid;
+    assign output_valid = reg_output_valid && !read;
+
+    logic enable;
+    assign enable = ~csn;
     // SIPO for incomming data
     sipo_shift_register #(.WIDTH(WIDTH)) sipo0 (
         .in(mosi),
@@ -34,7 +39,7 @@ module spi_slave #(parameter WIDTH = 32) (
         .rstn(rstn), // Drives 0 as long as chip is not selected
         .out(recv),
         .enable(enable),
-        .output_valid(output_valid)
+        .output_valid(reg_output_valid)
     );
 
     // TODO: Implement miso
@@ -46,9 +51,16 @@ module spi_slave #(parameter WIDTH = 32) (
     //     .out(miso)
     // );
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         // TODO: Use internal clock to signal output
-        //$display("recv = %d, output_valid = ", recv, output_valid);
+        if (reg_output_valid && !read) begin
+            //output_valid <= 1;
+            read <= 1;
+            //$display("[spi] recv = %d, output_valid = %d", recv, output_valid);
+        end
+        else if (!reg_output_valid) begin
+            read <= 0;
+        end
     end
 
 endmodule
