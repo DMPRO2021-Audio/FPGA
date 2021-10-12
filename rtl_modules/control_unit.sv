@@ -51,18 +51,12 @@ parameter WORD = 32                 // Word size
 `ifdef DEBUG
         $display("[cu] Address map of synth_t at %t", $time());
         for (int i = 0; i < $size(buffer); i += 8) begin
-            case ($size(buffer) - i)
-                1:  $display("[cu] %04x: %02x", i, buffer[i]);
-                2:  $display("[cu] %04x: %02x %02x", i, buffer[i], buffer[i+1]);
-                3:  $display("[cu] %04x: %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2]);
-                4:  $display("[cu] %04x: %02x %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]);
-                5:  $display("[cu] %04x: %02x %02x %02x %02x | %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4]);
-                6:  $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5]);
-                7:  $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5], buffer[i+6]);
-                default: begin
-                    $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5], buffer[i+6], buffer[i+7]);
-                end
-            endcase
+            automatic string prt = $sformatf("[cu] %04x:", i);
+            for (int ii = 0; ii < 8; ii++) begin
+                if (ii > 0 && ii % 4 == 0) prt = {prt, " |"};
+                prt = {prt, $sformatf(" %02x", buffer[i+ii])};
+            end
+            $display("%s", prt);
         end
 `endif
     endfunction
