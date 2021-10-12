@@ -19,9 +19,13 @@ set synth_only [lindex $argv 5]
 read_verilog -sv [glob $source_dir/shift_registers/sipo_register.sv]
 read_verilog -sv [glob $source_dir/spi_slave.sv]
 read_verilog -sv [glob $source_dir/fifo_delay.sv]
-#read_verilog -sv [glob $source_dir/oscillator.sv]
+read_verilog -sv [glob $source_dir/oscillator.sv]
+read_verilog [glob $source_dir/I2S_transmitter.v]
 read_verilog -sv [glob $source_dir/top.sv]
-read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]
+# Use this when using 48MHz clock
+#read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]  
+# Use this when using 100MHz clock (devboard)
+read_verilog [glob $source_dir/clk_wiz/clk_wiz_dev.v] 
 
 add_files [glob $source_dir/../lookup_tables/*]
 # ! 
