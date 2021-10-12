@@ -15,13 +15,20 @@ set synth_only [lindex $argv 5]
 
 ### Assemble project ###
 
+# ! Packages needed by other compilation units loaded first
+read_verilog -sv [glob $source_dir/structures_pkg.sv]
+
 # ! Add sources here
 read_verilog -sv [glob $source_dir/shift_registers/sipo_register.sv]
 read_verilog -sv [glob $source_dir/spi_slave.sv]
 read_verilog -sv [glob $source_dir/fifo_delay.sv]
-#read_verilog -sv [glob $source_dir/oscillator.sv]
-read_verilog -sv [glob $source_dir/top.sv]
+read_verilog -sv [glob $source_dir/constants.svh]
+read_verilog -sv [glob $source_dir/control_unit.sv]
+read_verilog -sv [glob $source_dir/oscillator.sv]
 read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]
+
+# ! top is loaded last
+read_verilog -sv [glob $source_dir/top.sv]
 
 add_files [glob $source_dir/../lookup_tables/*]
 # ! 

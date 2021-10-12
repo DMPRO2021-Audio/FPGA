@@ -1,4 +1,3 @@
-
 // Define system wide constants
 
 `ifndef CLK_FRQ
@@ -15,4 +14,8 @@
 
 `ifndef SAMPLE_RATE
 `define SAMPLE_RATE 48000
+`endif
+
+`ifndef SPI_WIDTH
+`define SPI_WIDTH 8
 `endif
