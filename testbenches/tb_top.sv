@@ -77,11 +77,11 @@ initial begin
     msg.wave_gens[0].shape = SAWTOOTH;
     msg.wave_gens[1].shape = SIN;
     msg.wave_gens[2].shape = SQUARE;
-    msg.wave_gens[3].shape = SAMPLE_NAME;
+    msg.wave_gens[3].shape = PIANO;
 
     for (int i = 0; i < `N_OSCILLATORS; i++) begin
         for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-            msg.wave_gens[i].envelopes[ii].rate = 32'h12349001;
+            msg.wave_gens[i].envelopes[ii].gain = 32'h12349001;
             msg.wave_gens[i].envelopes[ii].duration = 32'h42005678;
         end
     end

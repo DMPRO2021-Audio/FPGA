@@ -6,7 +6,7 @@ package shape_pkg;
         SAWTOOTH = 0,
         SQUARE,         
         SIN,           
-        SAMPLE_NAME     // Not implemented, this can be any sample
+        PIANO
     } wave_shape;
 endpackage
 package protocol_pkg;
@@ -16,7 +16,7 @@ package protocol_pkg;
     import shape_pkg::*;
 
     typedef struct packed {
-        logic [31:0] rate;
+        logic [31:0] gain;
         logic [31:0] duration;
     } envelope_t;
 
@@ -69,7 +69,7 @@ package protocol_pkg;
             synth.wave_gens[i].velocity = 0;
             synth.wave_gens[i].cmds = 0;
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                synth.wave_gens[i].envelopes[ii].rate = 0;
+                synth.wave_gens[i].envelopes[ii].gain = 0;
                 synth.wave_gens[i].envelopes[ii].duration = 0;
             end
         end
@@ -93,8 +93,8 @@ package protocol_pkg;
             $display("\t\t.cmds: %x", synth.wave_gens[i].cmds);
             $display("\t\t.envelopes: [");
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
-                    synth.wave_gens[i].envelopes[ii].rate, 
+                $display("\t\t\tenvelope_t { .gain: %x, .duration: %x }", 
+                    synth.wave_gens[i].envelopes[ii].gain, 
                     synth.wave_gens[i].envelopes[ii].duration);
             end
             $display("\t\t]");
@@ -111,8 +111,8 @@ package protocol_pkg;
             $display("\t\t.cmds: %x", wavegen.cmds);
             $display("\t\t.envelopes: [");
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
-                    wavegen.envelopes[ii].rate, 
+                $display("\t\t\tenvelope_t { .gain: %x, .duration: %x }", 
+                    wavegen.envelopes[ii].gain, 
                     wavegen.envelopes[ii].duration);
             end
             $display("\t\t]");

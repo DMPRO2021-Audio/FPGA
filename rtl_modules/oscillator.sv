@@ -27,7 +27,7 @@ module oscillator
 );
 
     logic [31:0] volume = 0;
-    logic[$clog2(`SAMPLE_RATE):0] sample_index = 0;
+    logic [$clog2(`SAMPLE_RATE):0] sample_index = 0;
     
     logic signed [WIDTH*2-1:0] out_val = 0;
     assign out = ((out_val * amplitude * volume) >>> (WIDTH-1));
@@ -36,6 +36,9 @@ module oscillator
     // to maintain as much detail as possible in the sample
     logic signed [WIDTH-1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
     initial $readmemh("../lookup_tables/sin_lut.txt", sin_lut);
+
+    logic signed [WIDTH-1:0] piano_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
+    initial $readmemh("../lookup_tables/piano_lut.txt", piano_lut);
 
     logic [31:0] duration_in_step = 0;
     logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
@@ -54,10 +57,10 @@ module oscillator
                     out_val <= sample_index > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
                 SIN: begin
-                    out_val <= sin_lut[sample_index >> 4]; // >> 4 is dividing by MIN_FREQUENCY
+                    out_val <= sin_lut[sample_index >> $clog2(`MIN_FREQUENCY)];
                 end
-                SAMPLE_NAME: begin
-                    out_val <= 0;
+                PIANO: begin
+                    out_val <= piano_lut[sample_index >> $clog2(`MIN_FREQUENCY)];
                 end
             endcase
 
@@ -79,10 +82,10 @@ module oscillator
                 
                 // This is done to not divide a negative number which would not
                 // work as rate is not set as a signed value
-                if(envelopes[envelope_step + 1].rate < envelopes[envelope_step].rate) begin
-                    volume <= envelopes[envelope_step].rate - duration_in_step * (envelopes[envelope_step].rate - envelopes[envelope_step + 1].rate) / envelopes[envelope_step].duration;
+                if(envelopes[envelope_step + 1].gain < envelopes[envelope_step].gain) begin
+                    volume <= envelopes[envelope_step].gain - duration_in_step * (envelopes[envelope_step].gain - envelopes[envelope_step + 1].gain) / envelopes[envelope_step].duration;
                 end else begin
-                    volume <= envelopes[envelope_step].rate + duration_in_step * (envelopes[envelope_step + 1].rate - envelopes[envelope_step].rate) / envelopes[envelope_step].duration;
+                    volume <= envelopes[envelope_step].gain + duration_in_step * (envelopes[envelope_step + 1].gain - envelopes[envelope_step].gain) / envelopes[envelope_step].duration;
                 end
 
             end

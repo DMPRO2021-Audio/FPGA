@@ -23,7 +23,7 @@ module tb_oscillator;
     oscillator #(.WIDTH(24)) oscillator(
         .clk(clk),
         .enable(enable),
-        .cmds(wave_gen.cmds),
+        .cmds(wave_gen.cmds), 
         .freq(wave_gen.freq[15:0]),
         .envelopes(wave_gen.envelopes),
         .amplitude(amplitude),
@@ -40,31 +40,31 @@ module tb_oscillator;
     initial begin
         wave_gen.freq = 2;
         wave_gen.velocity = 0;
-        wave_gen.shape = SIN;
+        wave_gen.shape = PIANO;
         wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT;
         
-        wave_gen.envelopes[0].rate = 100;
+        wave_gen.envelopes[0].gain = 100;
         wave_gen.envelopes[0].duration = 48000;
 
-        wave_gen.envelopes[1].rate = 200;
+        wave_gen.envelopes[1].gain = 200;
         wave_gen.envelopes[1].duration = 48000;
 
-        wave_gen.envelopes[2].rate = 200;
+        wave_gen.envelopes[2].gain = 200;
         wave_gen.envelopes[2].duration = 48000;
 
-        wave_gen.envelopes[3].rate = 300;
+        wave_gen.envelopes[3].gain = 300;
         wave_gen.envelopes[3].duration = 24000;
 
-        wave_gen.envelopes[4].rate = 250;
+        wave_gen.envelopes[4].gain = 250;
         wave_gen.envelopes[4].duration = 48000;
 
-        wave_gen.envelopes[5].rate = 100;
+        wave_gen.envelopes[5].gain = 100;
         wave_gen.envelopes[5].duration = 48000;
 
-        wave_gen.envelopes[6].rate = 500;
+        wave_gen.envelopes[6].gain = 500;
         wave_gen.envelopes[6].duration = 3 * 96000;
 
-        wave_gen.envelopes[7].rate = 400;
+        wave_gen.envelopes[7].gain = 400;
         wave_gen.envelopes[7].duration = 48000;
 
         $display("Simmulating with the following wavegen");
