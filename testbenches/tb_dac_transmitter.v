@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module tb_I2S_transmitter;
+module tb_dac_transmitter;
 
     reg clk;
     reg nReset;
@@ -20,7 +20,7 @@ module tb_I2S_transmitter;
 
     always #10 clk = ~clk;
 
-    I2S_Transmitter #(.WIDTH(24)) transmitter(
+    dac_transmitter #(.WIDTH(24)) transmitter(
         .clk(clk),
         .enable(1'b1),
         .left_data(left_data_in),

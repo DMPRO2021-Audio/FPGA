@@ -10,17 +10,17 @@ endif
 tb_fifo: tb_fifo.v ../rtl_modules/fifo_delay.sv
 	xvlog $^ -O0 -nolog
 	xelab -debug typical tb_fifo -s fifo_sim -nolog
-	xsim fifo_sim -R -nolog
+	xsim fifo_sim -R -nolog 
 
 tb_fifovd: tb_fifovd.sv ../rtl_modules/fifo_delay.sv
 	xvlog --sv $^ -nolog
 	xelab -O$(OPT) -debug typical tb_fifovd -s fifovd_sim -nolog
 	xsim fifovd_sim -R -nolog -unbuffered
 
-tb_I2S: tb_I2S_transmitter.v ../rtl_modules/I2S_transmitter.v 
+tb_dac: tb_dac_transmitter.v ../rtl_modules/dac_transmitter.v 
 	xvlog $^ -nolog
-	xelab -O0 -debug typical tb_I2S_transmitter -s I2S_sim -nolog
-	xsim I2S_sim -R -nolog
+	xelab -O0 -debug typical tb_dac_transmitter -s dac_sim -nolog
+	xsim dac_sim -R -nolog
 
 tb_piso: tb_piso.v ../rtl_modules/shift_registers/piso_register.v 
 	xvlog $^ -nolog

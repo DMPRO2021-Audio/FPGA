@@ -1,11 +1,12 @@
 `timescale 1ns / 1ps
 
 /*
-    Based on the following design:
-    https://www.hackster.io/Kampino/playing-audio-with-an-fpga-d2bc85
+    NOTE: This is transmitting using the Left-Justified dataformat as described in:
+    https://github.com/DMPRO2021-Audio/FPGA/issues/2 and
+    https://www.ti.com/lit/ds/symlink/pcm1741.pdf?HQS=dis-dk-null-digikeymode-dsf-pf-null-wwe&ts=1633949631156&ref_url=https%253A%252F%252Fwww.digikey.no%252F (page 9)
 */
 
-module I2S_Transmitter
+module dac_transmitter
 #(
     parameter WIDTH = 24
 )
