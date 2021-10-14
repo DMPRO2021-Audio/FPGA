@@ -4,19 +4,22 @@
 
 `include "constants.svh"
 
+`define MAX_AMP ((1 << 23) - 1)
 // Assign pins and instantiate design
 module top(
-    input CLK100MHZ,
+    input logic CLK100MHZ,
 
-    input ck_mosi, ck_sck, ck_ss,   // SPI
-    output ck_miso,                 // SPI
+    input logic ck_mosi, ck_sck, ck_ss,   // SPI
+    output logic ck_miso,                 // SPI
 
-    input [3:0] btn,
+    input logic [3:0] btn,
 
-    (* mark_debug="true" *) output [3:0] led,
-    output [3:0] led_r, led_g, led_b
-    output [3:0] ja                     // Output to DAC
+    (* mark_debug="true" *) output logic [3:0] led,
+    output logic [3:0] led_r, led_g, led_b,
+    output logic [3:0] ja                     // Output to DAC
 );
+    /* Declare variables */
+
     // assign led[3:0] = 4'b1010;
     logic clk;          
     logic sys_clk;                      // System clock of the DAC
@@ -30,7 +33,7 @@ module top(
     logic ck_sck_reg;
     logic output_valid;
     
-    assign clk = CLK100MHZ;   // Rename clock
+    assign clk = CLK100MHZ;             // Rename clock
     
     initial sample_clk = 0;
     initial dac_bit_clk = 0;
@@ -38,18 +41,26 @@ module top(
     // Mapping the leds to the upper part of the wave
     // This is only used for debugging and to show that the wave is generated
     logic wave;
-    `define MAX_AMP ((1 << 23) - 1)
     assign led = {
         wave >= 7 * (`MAX_AMP >> 3),
         wave >= 6 * (`MAX_AMP >> 3),
         wave >= 5 * (`MAX_AMP >> 3),
-        wave >= 4 * (`MAX_AMP >> 3),
+        wave >= 4 * (`MAX_AMP >> 3)
     };
     assign led_r[3] = 1;
     assign led_r[2] = output_valid;
     assign led_r[1] = ck_sck_reg;
-    assign led_b[0] = ~ck_ss | btn[0]; // Turn on when receiving
+    assign led_b[0] = ~ck_ss | btn[0];  // Turn on when receiving
 
+    logic [31:0] volume;
+    logic [31:0] reverb;
+    wavegen_t wave_gens[`N_OSCILLATORS];
+
+    // Placeholders for unused signals
+    logic in_placeholder = 1;
+    logic out_placeholder;
+
+    /* Instantiate modules */
 
     clk_wiz_dev clk_wiz (
         .clk_in(clk),
@@ -69,7 +80,7 @@ module top(
         .output_valid(output_valid)
     );
 
-    receiver_control_unit cu0 (
+    control_unit cu0 (
         .sig_in(recv),
         .clk(clk),
         .enable(output_valid),
@@ -78,16 +89,6 @@ module top(
         .reverb(reverb),
         .wave_gens(wave_gens)
     );
-
-    // Assign led values
-    always_ff @(posedge clk) begin
-        if (output_valid) begin
-            led_val <= recv[3:0];
-`ifdef DEBUG
-            $display("[top] output_valid=1, recv=%x", recv);
-`endif
-        end
-    end
 
     oscillator #(.WIDTH(24)) oscillator0(
         .clk(sample_clk),
@@ -109,13 +110,19 @@ module top(
         .lrclk(lrclk),
         .sd(sd)
     );
-    
-    logic [31:0] volume;
-    logic [31:0] reverb;
-    wavegen_t wave_gens[`N_OSCILLATORS];
 
-    logic in_placeholder = 1;
-    logic out_placeholder;
+    /* Define always blocks */
+
+    // Assign led values
+    always_ff @(posedge clk) begin
+        if (output_valid) begin
+            led_val <= recv[3:0];
+`ifdef DEBUG
+            $display("[top] output_valid=1, recv=%x", recv);
+`endif
+        end
+    end
+    
 
     /* 
         Deriving the sample clock (48 KHz) and 
