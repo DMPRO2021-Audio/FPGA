@@ -44,20 +44,14 @@ end
 // end
 function void print_mem(input logic[0:$bits(synth_t)/8-1][7:0] buffer);
 `ifdef DEBUG
-    $display("[cu] Address map of synth_t at %t", $time());
+    $display("[tb_top] Address map of synth_t at %t", $time());
     for (int i = 0; i < $size(buffer); i += 8) begin
-        case ($size(buffer) - i)
-            1:  $display("[cu] %04x: %02x", i, buffer[i]);
-            2:  $display("[cu] %04x: %02x %02x", i, buffer[i], buffer[i+1]);
-            3:  $display("[cu] %04x: %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2]);
-            4:  $display("[cu] %04x: %02x %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]);
-            5:  $display("[cu] %04x: %02x %02x %02x %02x | %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4]);
-            6:  $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5]);
-            7:  $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5], buffer[i+6]);
-            default: begin
-                $display("[cu] %04x: %02x %02x %02x %02x | %02x %02x %02x %02x", i, buffer[i], buffer[i+1], buffer[i+2], buffer[i+3], buffer[i+4], buffer[i+5], buffer[i+6], buffer[i+7]);
-            end
-        endcase
+        $write("[tb_top] %04x:", i);
+        for (int ii = 0; ii < 8; ii++) begin
+            if (ii > 0 && ii % 4 == 0) $write(" |");
+            $write(" %02x", buffer[i+ii]);
+        end
+        $write("\n");
     end
 `endif
 endfunction

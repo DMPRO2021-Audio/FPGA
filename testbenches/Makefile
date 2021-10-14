@@ -7,10 +7,15 @@ ifndef OPT
 	OPT=0
 endif
 
-tb_fifo: tb_fifo.v ../rtl_modules/fifo.v
+tb_fifo: tb_fifo.v ../rtl_modules/fifo_delay.sv
 	xvlog $^ -O0 -nolog
 	xelab -debug typical tb_fifo -s fifo_sim -nolog
 	xsim fifo_sim -R -nolog 
+
+tb_fifovd: tb_fifovd.sv ../rtl_modules/fifo_delay.sv
+	xvlog --sv $^ -nolog
+	xelab -O$(OPT) -debug typical tb_fifovd -s fifovd_sim -nolog
+	xsim fifovd_sim -R -nolog -unbuffered
 
 tb_dac: tb_dac_transmitter.v ../rtl_modules/dac_transmitter.v 
 	xvlog $^ -nolog
@@ -47,7 +52,7 @@ tb_top: tb_top.sv $(TOP_SRC)
 	echo $(TOP_SDB)
 	xvlog --sv $(INCLUDES) $^ -d DEBUG=1 --log ../logs/xvlog.log 
 	xelab -O$(OPT) -debug typical tb_top -s top_sim --log ../logs/xelab.log
-	xsim top_sim -R --log ../logs/xsim.log
+	xsim top_sim -R --log ../logs/xsim.log --ieeewarnings
 
 tb_control_unit: $(SRC)/structures_pkg.sv $(SRC)/control_unit.sv
 	xvlog --sv $^ -d DEBUG=1 --log ../logs/xvlog.log
