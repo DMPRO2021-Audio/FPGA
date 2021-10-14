@@ -75,6 +75,7 @@ package protocol_pkg;
     endfunction
 
     function void print_synth_t(input synth_t synth);
+`ifdef DEBUG
         $display("synth_t {");
         $display("\t.reverb: %x", synth.reverb);
         $display("\t.volume: %x", synth.volume);
@@ -100,6 +101,7 @@ package protocol_pkg;
             $display("\t}");
         end
         $display("}");
+`endif // def DEBUG
     endfunction
 
 endpackage
