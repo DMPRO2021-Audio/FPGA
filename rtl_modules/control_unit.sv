@@ -25,7 +25,7 @@ parameter WORD = 32                 // Word size
     input logic enable, 
     input logic rstn,  
 
-    output output_valid,            // Signal full message has been recieved
+    output output_update,            // Signal full message has been received
     /* Global values of synth_t */
     output logic    [WORD-1:0]       volume,
     output logic    [WORD-1:0]       reverb,
@@ -42,9 +42,11 @@ parameter WORD = 32                 // Word size
     assign volume = conf.volume;
     assign reverb = conf.reverb;
 
-    for (genvar i = 0; i < `N_OSCILLATORS; i++) begin
+    for (int i = 0; i < `N_OSCILLATORS; i++) begin
         assign wave_gens[i] = conf.wave_gens[i];
     end
+
+    assign output_update = counter == $size(buffer);
 
     /* Print buffer as a memory map */
     function void print_mem(input logic[WIDTH-1:0][0:$bits(synth_t)/WIDTH-1] buffer);
@@ -64,27 +66,32 @@ parameter WORD = 32                 // Word size
 
     always_ff @ (posedge(clk)) begin
         if (!rstn) begin
+            /* Explicit reset as implicit was not possible when the struct contains enums */
             reset_synth_t(conf);
-            //conf <= synth_t'('{default:0});
             buffer <= '{default:0};
         end
         else if (enable) begin
+            $display("[cu] output_update = %d", output_update);
             if (counter < $size(buffer)) begin
+                //output_update   <= 0;
                 buffer[counter] <= sig_in;
-                counter <= counter + 1;
-                $display("[cu] Recieved sig_in = 0x%02x. counter = %d", sig_in, counter);
+                counter         <= counter + 1;
+                // Debug:
+                $display("[cu] Received sig_in = 0x%02x. counter = %d", sig_in, counter);
                 print_mem(buffer);
                 print_synth_t(synth_t'(buffer));
             end
             else begin
                 /* Cast to synth_t struct. Might have to be done as an explicit function due to
                 byte alignment e.g. of enums in structure sent from mcu */
-                conf <= synth_t'(buffer);
+                conf            <= synth_t'(buffer);
+                counter         <= 0;
+                //output_update   <= 1;
             end
         end
         else begin
             
-            //$display("Recieved struct:");
+            //$display("Received struct:");
         end
     end
 endmodule
