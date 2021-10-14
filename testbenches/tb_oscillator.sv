@@ -38,41 +38,41 @@ module tb_oscillator;
     end
 
     initial begin
-        wave_gen.freq = 2;
+        wave_gen.freq = 440;
         wave_gen.velocity = 0;
         wave_gen.shape = PIANO;
         wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT;
         
         wave_gen.envelopes[0].gain = 100;
-        wave_gen.envelopes[0].duration = 48000;
+        wave_gen.envelopes[0].duration = 4800;
 
         wave_gen.envelopes[1].gain = 200;
-        wave_gen.envelopes[1].duration = 48000;
+        wave_gen.envelopes[1].duration = 4800;
 
-        wave_gen.envelopes[2].gain = 200;
-        wave_gen.envelopes[2].duration = 48000;
+        wave_gen.envelopes[2].gain = 300;
+        wave_gen.envelopes[2].duration = 4800;
 
         wave_gen.envelopes[3].gain = 300;
-        wave_gen.envelopes[3].duration = 24000;
+        wave_gen.envelopes[3].duration = 2400;
 
-        wave_gen.envelopes[4].gain = 250;
-        wave_gen.envelopes[4].duration = 48000;
+        wave_gen.envelopes[4].gain = 300;
+        wave_gen.envelopes[4].duration = 4800;
 
         wave_gen.envelopes[5].gain = 100;
-        wave_gen.envelopes[5].duration = 48000;
+        wave_gen.envelopes[5].duration = 4800;
 
-        wave_gen.envelopes[6].gain = 500;
-        wave_gen.envelopes[6].duration = 3 * 96000;
+        wave_gen.envelopes[6].gain = 100;
+        wave_gen.envelopes[6].duration = 3 * 9600;
 
-        wave_gen.envelopes[7].gain = 400;
-        wave_gen.envelopes[7].duration = 48000;
+        wave_gen.envelopes[7].gain = 0;
+        wave_gen.envelopes[7].duration = 4800;
 
-        $display("Simmulating with the following wavegen");
+        $display("Simulating with the following wavegen");
         print_wavegen_t(wave_gen);
 
         fd = $fopen("./test_output/oscillator.txt", "w+");
 
-        #20000000;
+        #600000;
 
         $fclose(fd);
 
