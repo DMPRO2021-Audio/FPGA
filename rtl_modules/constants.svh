@@ -19,3 +19,8 @@
 `ifndef SPI_WIDTH
 `define SPI_WIDTH 8
 `endif
+
+`ifndef CMD_BITS
+`define ENVELOPE_RESET_BIT 0
+`define CMD_BITS
+`endif
