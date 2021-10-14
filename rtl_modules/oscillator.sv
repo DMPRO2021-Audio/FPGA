@@ -5,7 +5,6 @@
 `define MIN_FREQUENCY 16
 `define MAX_AMPLITUDE ((1 << WIDTH) - 1)
 `define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
-`define MAX_VOLUME ((1 << 32) - 1)
 
 import shape_pkg::*;
 import protocol_pkg::*;
@@ -24,21 +23,21 @@ module oscillator
     input logic [WIDTH-1:0] amplitude,
     input wave_shape shape,
 
-    output logic [WIDTH-1:0] out
+    output logic signed [WIDTH-1:0] out
 );
 
     logic [31:0] volume = 0;
     logic[$clog2(`SAMPLE_RATE):0] sample_index = 0;
     
-    logic[WIDTH*2-1:0] out_val = 0;
-    assign out = ((out_val * amplitude * volume) / `MAX_AMPLITUDE); // TODO: It might just work to use >> 24 instead of dividing
+    logic signed [WIDTH*2-1:0] out_val = 0;
+    assign out = ((out_val * amplitude * volume) >>> (WIDTH-1));
 
     // This lookuptable contains the sin values at the maximum amplitude
     // to maintain as much detail as possible in the sample
-    logic [WIDTH-1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
+    logic signed [WIDTH-1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
     initial $readmemh("../lookup_tables/sin_lut.txt", sin_lut);
 
-    logic [31:0] duration_in_step = 0;  // Number of ms in the current duration
+    logic [31:0] duration_in_step = 0;
     logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
 
     always_ff @ (posedge(clk)) begin
@@ -49,10 +48,10 @@ module oscillator
 
             case(shape)
                 SAWTOOTH: begin
-                    out_val <= (`MAX_AMPLITUDE / `SAMPLE_RATE) * sample_index;
+                    out_val <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * sample_index) - (`MAX_AMPLITUDE >> 1);
                 end
                 SQUARE: begin
-                    out_val <= sample_index > (`SAMPLE_RATE >> 1) ? 0 : `MAX_AMPLITUDE;
+                    out_val <= sample_index > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
                 SIN: begin
                     out_val <= sin_lut[sample_index >> 4]; // >> 4 is dividing by MIN_FREQUENCY

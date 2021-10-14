@@ -10,13 +10,11 @@ module tb_oscillator;
     logic clk;
     logic enable;
     logic [23:0] amplitude;
-    wave_shape shape;
     wavegen_t wave_gen;
 
-    logic [23:0] out;
+    logic signed [23:0] out;
 
     initial amplitude = 200;
-    initial shape = SIN;
     initial enable = 1;
     initial clk = 0;
 
@@ -29,7 +27,7 @@ module tb_oscillator;
         .freq(wave_gen.freq[15:0]),
         .envelopes(wave_gen.envelopes),
         .amplitude(amplitude),
-        .shape(shape),
+        .shape(wave_gen.shape),
         .out(out)
     );
 
@@ -40,7 +38,7 @@ module tb_oscillator;
     end
 
     initial begin
-        wave_gen.freq = 400;
+        wave_gen.freq = 2;
         wave_gen.velocity = 0;
         wave_gen.shape = SIN;
         wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT;
