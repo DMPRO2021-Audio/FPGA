@@ -55,3 +55,42 @@ module fifo_delay #(
 `endif
     end
 endmodule
+
+
+module fifo_var_delay #(
+    parameter WIDTH = 12, 
+    parameter MAXLEN = 2048
+)(
+    input clk,
+    input rstn,
+    input enable, write,
+    input [15:0] len,
+    input [WIDTH-1:0] in,
+    output [WIDTH-1:0] out
+);
+
+    logic [WIDTH-1:0] queue[0:MAXLEN-1];
+
+    assign out = queue[len-1];
+
+    always_ff @ (posedge clk) begin
+        if (!rstn) queue <= '{default:0};
+        if (enable) begin
+            queue[0] <= in;
+            for (int i = 1; i < MAXLEN; i = i + 1) begin
+                queue[i] <= queue[i-1];
+            end
+        end
+        else begin
+            for (int i = 0; i < MAXLEN; i = i + 1) begin
+                queue[i] <= queue[i];
+            end
+        end
+`ifdef DEBUG
+        $display("[fifovd] len = %d", len);
+        for (int i = 0; i < len; i = i + 1) begin
+            $display("[fifovd] %d: %d", i, queue[i][WIDTH-1:0]);
+        end
+`endif
+    end
+endmodule
