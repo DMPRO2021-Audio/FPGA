@@ -15,7 +15,7 @@ import shape_pkg::*;
 // Might add some on-demand feedback to mcu later?
 //-------------------------------------------------------------------------------------------------/
 
-module receiver_control_unit #(
+module control_unit #(
 parameter WIDTH = 8,                // Width of message words coming from receiver (SPI slave)
 parameter WORD = 32                 // Word size
 ) (
@@ -42,7 +42,7 @@ parameter WORD = 32                 // Word size
     assign volume = conf.volume;
     assign reverb = conf.reverb;
 
-    for (int i = 0; i < `N_OSCILLATORS; i++) begin
+    for (genvar i = 0; i < `N_OSCILLATORS; i++) begin
         assign wave_gens[i] = conf.wave_gens[i];
     end
 
