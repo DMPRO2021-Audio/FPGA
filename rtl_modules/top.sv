@@ -92,10 +92,9 @@ module top(
     oscillator #(.WIDTH(24)) oscillator0(
         .clk(sample_clk),
         .enable(locked),
-        .freq(1),                   
+        .freq(`REAL_TO_FREQ_FIXED_POINT(1)),                   
         .amplitude(`MAX_AMP),
         .shape(SIN),
-
         .out(wave)
     );
 

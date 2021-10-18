@@ -22,5 +22,13 @@
 
 `ifndef CMD_BITS
 `define ENVELOPE_RESET_BIT 0
+`define WAVEGEN_ENABLE_BIT 1
 `define CMD_BITS
+`endif
+
+`ifndef FIXED_POINTS
+`define FIXED_POINTS
+`define VOLUME_FIXED_POINT 10
+`define FREQ_FIXED_POINT 10
+`define REAL_TO_FREQ_FIXED_POINT(freq) int'(freq * (1 <<< `FREQ_FIXED_POINT))
 `endif

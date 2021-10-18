@@ -38,9 +38,10 @@ tb_oscillator: ../rtl_modules/structures_pkg.sv ../rtl_modules/oscillator.sv tb_
 	mkdir -p test_output
 	xsim oscillator_sim -R -nolog
 
-tb_mixer: tb_mixer.sv ../rtl_modules/mixer.sv ../rtl_modules/structures_pkg.sv ../rtl_modules/oscillator.sv
+tb_mixer: ../rtl_modules/structures_pkg.sv tb_mixer.sv ../rtl_modules/mixer.sv ../rtl_modules/oscillator.sv
 	xvlog $^ -nolog -sv
 	xelab -O0 -debug typical tb_mixer -s mixer_sim -nolog
+	mkdir -p test_output
 	xsim mixer_sim -R -nolog
 
 TOP_SRC = \
