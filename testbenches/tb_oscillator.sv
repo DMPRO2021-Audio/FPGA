@@ -24,7 +24,7 @@ module tb_oscillator;
         .clk(clk),
         .enable(enable),
         .cmds(wave_gen.cmds), 
-        .freq(wave_gen.freq[15:0]),
+        .freq(wave_gen.freq),
         .envelopes(wave_gen.envelopes),
         .amplitude(amplitude),
         .shape(wave_gen.shape),
@@ -38,10 +38,10 @@ module tb_oscillator;
     end
 
     initial begin
-        wave_gen.freq = 440;
+        wave_gen.freq = `REAL_TO_FREQ_FIXED_POINT(440);
         wave_gen.velocity = 0;
         wave_gen.shape = PIANO;
-        wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT;
+        wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;
         
         wave_gen.envelopes[0].gain = 100;
         wave_gen.envelopes[0].duration = 4800;
