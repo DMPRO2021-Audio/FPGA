@@ -57,6 +57,10 @@ $(TS)tb_oscillator: $(TB)/tb_oscillator.sv $(TS)oscillator $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
+$(TS)tb_mixer: $(TB)/tb_mixer.sv $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	touch $@
+
 
 ### Module testbenches ###
 
@@ -80,6 +84,11 @@ tb_piso: tb_piso.v ../rtl_modules/shift_registers/piso_register.v
 tb_sipo: $(TS)tb_sipo
 	xelab -O0 -debug typical tb_sipo -s sipo_sim -nolog
 	xsim sipo_sim -R -nolog
+
+tb_mixer: $(TS)tb_mixer
+	mkdir -p test_output
+	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xsim $@_sim -R -nolog 
 
 # ! WORKING EXAMPLE
 tb_oscillator: $(TS)tb_oscillator

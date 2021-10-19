@@ -17,7 +17,7 @@ module oscillator
     input logic clk,                      // Clock should be of the same sample frequency
     input logic enable,                   // Generate audio signal, else output is 0
     input logic [7:0] cmds,               // Used to reset envelope
-    input logic [15:0] freq,              // Frequency of the oscillator in Hz
+    input logic [31:0] freq,              // Frequency of the oscillator in mHz (actually 1024 * Hz)
     input envelope_t [0:`ENVELOPE_LEN-1] envelopes,
 
     input logic [WIDTH-1:0] amplitude,
@@ -27,10 +27,10 @@ module oscillator
 );
 
     logic [31:0] volume = 0;
-    logic [$clog2(`SAMPLE_RATE):0] sample_index = 0;
+    logic [$clog2(`SAMPLE_RATE) + `FREQ_FIXED_POINT:0] sample_index = 0;
     
     logic signed [WIDTH*2-1:0] out_val = 0;
-    assign out = ((out_val * amplitude * volume) >>> (WIDTH-1));
+    assign out = ((out_val * amplitude * volume) >>> (WIDTH-2)); //The bitshift is dividing by the max amplitude
 
     // This lookuptable contains the sin values at the maximum amplitude
     // to maintain as much detail as possible in the sample
@@ -47,20 +47,22 @@ module oscillator
 
         if(enable) begin
 
-            sample_index <= (sample_index + freq) % `SAMPLE_RATE;
+            // The sample index is a fixed point value with the fexed point at `FREQ_FIXED_POINT.
+            // This is needed to be able to have decimal frequencies.
+            sample_index <= (sample_index + freq) % (`SAMPLE_RATE << `FREQ_FIXED_POINT);    
 
             case(shape)
                 SAWTOOTH: begin
-                    out_val <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * sample_index) - (`MAX_AMPLITUDE >> 1);
+                    out_val <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * (sample_index >> `FREQ_FIXED_POINT)) - (`MAX_AMPLITUDE >> 1);
                 end
                 SQUARE: begin
-                    out_val <= sample_index > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
+                    out_val <= (sample_index >> `FREQ_FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
                 SIN: begin
-                    out_val <= sin_lut[sample_index >> $clog2(`MIN_FREQUENCY)];
+                    out_val <= sin_lut[sample_index >> ($clog2(`MIN_FREQUENCY) + `FREQ_FIXED_POINT)];
                 end
                 PIANO: begin
-                    out_val <= piano_lut[sample_index >> $clog2(`MIN_FREQUENCY)];
+                    out_val <= piano_lut[sample_index >> ($clog2(`MIN_FREQUENCY) + `FREQ_FIXED_POINT)];
                 end
             endcase
 
