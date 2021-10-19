@@ -4,6 +4,9 @@
 
 `include "constants.svh"
 
+import protocol_pkg::*;
+import shape_pkg::*;
+
 `define MAX_AMP ((1 << 23) - 1)
 // Assign pins and instantiate design
 module top(
@@ -62,12 +65,18 @@ module top(
 
     /* Instantiate modules */
 
+`ifndef DEBUG
+    /* Create correct clock on dev board */
     clk_wiz_dev clk_wiz (
         .clk_in(clk),
         .reset(0),
         .clk_out(sys_clk),
         .locked(locked)
     );
+`else
+    assign sys_clk = clk;
+    assign locked = 1;
+`endif
 
     spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (
         .mosi(ck_mosi),
