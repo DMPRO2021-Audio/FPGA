@@ -7,9 +7,9 @@ module tb_fifo;
 
     reg [11:0] in_value = 0;
     wire [11:0] out_value;
-    fifo #(.WIDTH(12), .LEN(10)) fifo_0(
+    fifo_delay #(.WIDTH(12), .LEN(10)) fifo_0(
         .clk(clk), 
-        .resetn(resetn),
+        .rstn(resetn),
         .enable(enable),
         .in(in_value), 
         .out(out_value)
