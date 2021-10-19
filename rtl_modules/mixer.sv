@@ -15,11 +15,13 @@ module mixer
 );
 
 logic signed [WIDTH-1:0] sum = 0;
+logic signed [WIDTH*2 - 1:0] scaling = 0;
 
 always_ff @(posedge clk) begin
     // Sum and multiply with an amplitude coefficient
     sum <= waves.sum();
-    out <= sum * master_volume * num_enabled / (num_enabled + 2) >>> `VOLUME_FIXED_POINT;
+    scaling <= sum * master_volume * num_enabled / (num_enabled + 2);
+    out <= scaling >>> `VOLUME_FIXED_POINT;
 end
 
 endmodule
