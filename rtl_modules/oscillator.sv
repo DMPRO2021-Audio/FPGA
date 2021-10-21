@@ -35,10 +35,10 @@ module oscillator
     // This lookuptable contains the sin values at the maximum amplitude
     // to maintain as much detail as possible in the sample
     logic signed [WIDTH-1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
-    initial $readmemh("../lookup_tables/sin_lut.txt", sin_lut);
+    initial $readmemh("./lookup_tables/sin_lut.txt", sin_lut);
 
     logic signed [WIDTH-1:0] piano_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
-    initial $readmemh("../lookup_tables/piano_lut.txt", piano_lut);
+    initial $readmemh("./lookup_tables/piano_lut.txt", piano_lut);
 
     logic [31:0] duration_in_step = 0;
     logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
@@ -46,7 +46,6 @@ module oscillator
     always_ff @ (posedge(clk)) begin
 
         if(enable) begin
-
             // The sample index is a fixed point value with the fexed point at `FREQ_FIXED_POINT.
             // This is needed to be able to have decimal frequencies.
             sample_index <= (sample_index + freq) % (`SAMPLE_RATE << `FREQ_FIXED_POINT);    
