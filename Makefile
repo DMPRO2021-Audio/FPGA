@@ -3,14 +3,15 @@ PROJECT   = DMPRO_audio
 BUILD     = ./design_output
 SRC       = ./rtl_modules
 TB        = ./testbenches
+TEST_OUT  = ./test_output
 # Absolute paths because I don't trust Vivado
-SRC_DIR   = $(PWD)/rtl_modules
-BUILD_DIR = $(PWD)/design_output
+SRC_DIR   = $(PWD)/$(SRC)
+BUILD_DIR = $(PWD)/$(BUILD)
 LOGS      = $(PWD)/logs
 CONSTR_DIR= $(PWD)/constraints
 SYNTH_DIR = $(PWD)/logs/synth_$(shell date +"%y%m%d%H%M")
-FLASH_DIR = $(PWD)logs/flash_$(shell date +"%y%m%d%H%M")
-TEMP_DIR  = $(OUTPUT_DIR)/tmp
+FLASH_DIR = $(PWD)/logs/flash_$(shell date +"%y%m%d%H%M")
+TEMP_DIR  = $(BUILD_DIR)/tmp
 
 
 # Timestamps
@@ -34,6 +35,12 @@ ifndef OPT
 	OPT=0
 endif
 
+ifdef GUI
+	GUI=-gui -view $(BUILD)/$@_waves.wcfg
+endif
+
+all: synth
+
 
 ## Testbenches ##
 
@@ -42,6 +49,10 @@ $(TS)tb_fifo: $(TB)/tb_fifo.v $(TS)fifo_delay
 	touch $@
 
 $(TS)tb_fifovd: $(TB)/tb_fifovd.sv $(TS)fifo_delay
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	touch $@
+
+$(TS)tb_clk_downscale: $(TB)/tb_clk_downscale.sv $(TS)clk_downscale
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
@@ -57,6 +68,10 @@ $(TS)tb_oscillator: $(TB)/tb_oscillator.sv $(TS)oscillator $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
+$(TS)tb_reverb: $(TB)/tb_reverb.sv $(TS)reverberator_core $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	touch $@
+
 $(TS)tb_mixer: $(TB)/tb_mixer.sv $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
@@ -66,20 +81,28 @@ $(TS)tb_mixer: $(TB)/tb_mixer.sv $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
 
 tb_fifo: $(TS)tb_fifo $(TS)fifo_delay
 	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
-	xsim -L $(WORKLIB_NAME)=$(BUILD) $@_sim -R -nolog 
+	xsim $@_sim -R -nolog 
 
 tb_fifovd: $(TS)tb_fifovd $(TS)fifo_delay
 	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim -L $(WORKLIB_NAME)=$(BUILD) $@_sim -R -nolog 
 
+tb_clk_downscale: $(TS)tb_clk_downscale
+	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xsim $@_sim -R -nolog 
+
 tb_dac: $(TS)tb_dac $(TS)dac_transmitter 
 	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
-	xsim -L $(WORKLIB_NAME)=$(BUILD) $@_sim -R -nolog 
+	xsim $@_sim -R -nolog 
 
 tb_piso: tb_piso.v ../rtl_modules/shift_registers/piso_register.v 
 	xvlog $^ -nolog
 	xelab -O0 -debug typical tb_piso -s piso_sim -nolog
 	xsim piso_sim -R -nolog
+
+tb_reverb: $(TS)tb_reverb
+	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xsim $@_sim -R -nolog 
 
 tb_sipo: $(TS)tb_sipo
 	xelab -O0 -debug typical tb_sipo -s sipo_sim -nolog
@@ -103,15 +126,19 @@ tb_oscillator: $(TS)tb_oscillator
 
 ## Modules ##
 
-$(TS)allpass_filter: $(SRC)/filters/allpass_filter.sv
+$(TS)allpass_filter: $(SRC)/filters/allpass_filter.sv fifo_var_delay
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
 $(TS)clk_wiz: $(SRC)/clk_wiz.v $(COMMON_DEPS)
-	xvlog $(NCLUDES) $(WORKLIB) $< -nolog
+	xvlog $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)comb_filter: $(SRC)/filters/comb_filter.sv
+$(TS)clk_downscale: $(SRC)/clk_downscale.sv
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	@touch $@
+
+$(TS)comb_filter: $(SRC)/filters/comb_filter.sv fifo_var_delay
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -120,18 +147,22 @@ $(TS)control_unit: $(SRC)/control_unit.sv $(COMMON_DEPS)
 	@touch $@
 
 $(TS)dac_transmitter: $(SRC)/dac_transmitter.v $(COMMON_DEPS)
-	xvlog $(NCLUDES) $(WORKLIB) $< -nolog
+	xvlog $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
 $(TS)fifo_delay: $(SRC)/fifo_delay.sv
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)oscillator: $(SRC)/oscillator.sv $(COMMON_DEPS)
-	xvlog --sv $(NCLUDES) $(WORKLIB) $< -nolog
+$(TS)mixer: $(SRC)/mixer.sv $(COMMON_DEPS)
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv 
+$(TS)oscillator: $(SRC)/oscillator.sv $(COMMON_DEPS)
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	@touch $@
+
+$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv $(TS)clk_downscale comb_filter allpass_filter
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -158,7 +189,7 @@ fifo_delay: $(TS)fifo_delay
 fifo_var_delay: $(TS)fifo_delay
 comb_filter: $(TS)comb_filter
 allpass_filter: $(TS)allpass_filter
-reverb: $(TS)reverberator_core allpass_filter comb_filter
+reverberator_core: $(TS)reverberator_core
 
 ## Top module ##
 
@@ -182,8 +213,8 @@ top: $(TS)top
 
 tb_top: $(TS)tb_top $(TS)top $(TOP_DEPS) $(COMMON_DEPS)
 	-mkdir -p $(LOGS)
-	xelab -O$(OPT) -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).tb_top -s top_sim --log $(LOGS)/top_xelab.log
-	xsim top_sim -R --log ../logs/xsim.log --ieeewarnings
+	xelab -O$(OPT) -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim --log $(LOGS)/top_xelab.log
+	xsim $@_sim -R --log $(LOGS)/xsim.log -wdb $(BUILD)/$@_waves.wdb $(GUI) --ieeewarnings
 
 
 
@@ -196,12 +227,12 @@ TCL_ARGS = \
 	$(SRC) \
 	$(CONSTR_DIR) \
 	$(SYNTH_DIR) \
-	$(OUTPUT_DIR) \
+	$(BUILD_DIR) \
 	$(SYNTH_ONLY)
 
 # Synthesise and generate bistream
 synth:
-	-mkdir -p $(OUTPUT_DIR)
+	-mkdir -p $(BUILD_DIR)
 	-mkdir -p $(SYNTH_DIR)
 	vivado \
 		-mode batch \
@@ -212,7 +243,7 @@ synth:
 		-tempDir $(TEMP_DIR)
 
 # Flash bitstream to FPGA
-flash: $(OUTPUT_DIR)/program.bit
+flash: $(BUILD_DIR)/program.bit
 	-mkdir -p $(FLASH_DIR)
 	vivado \
 		-mode batch \
@@ -222,6 +253,16 @@ flash: $(OUTPUT_DIR)/program.bit
 		-tclargs $(TCL_ARGS) \
 		-tempDir $(TEMP_DIR)
 
+vivado:
+	-mkdir -p $(BUILD_DIR)
+	-mkdir -p $(SYNTH_DIR)
+	vivado \
+		-mode tcl \
+		-source scripts/env_setup.tcl \
+		-journal $(SYNTH_DIR)/vivado_build.jou \
+		-log $(SYNTH_DIR)/vivado_build.log \
+		-tclargs $(TCL_ARGS) \
+		-tempDir $(TEMP_DIR)
 
 ### UTILS ###
 
@@ -229,6 +270,7 @@ flash: $(OUTPUT_DIR)/program.bit
 init:
 	-mkdir -p $(BUILD)
 	-mkdir -p $(LOGS)
+	-mkdir -p $(TEST_OUT)
 
 help:
 	@echo "FPGA makefile"
