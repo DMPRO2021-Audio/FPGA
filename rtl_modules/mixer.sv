@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "constants.svh"
+
 module mixer
 #(
     WIDTH = 24,
