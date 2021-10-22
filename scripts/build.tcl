@@ -19,8 +19,8 @@ if {$synth_only == 1} { exit 0 }
 # Debug ILA cores
 source [file join $scripts_dir insert_ila.tcl]
 # Optimize
-opt_design
-power_opt_design
+# opt_design
+# power_opt_design
 # Placement
 place_design
 # Write checkpoint
