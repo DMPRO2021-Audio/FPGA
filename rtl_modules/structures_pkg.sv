@@ -56,7 +56,7 @@ package protocol_pkg;
         echo_t echo;
     } synth_t;
 
-    function void reset_synth_t(output synth_t synth);
+    function automatic void reset_synth_t(output synth_t synth);
         synth.reverb = 0;
         synth.volume = 0;
         synth.reverb = '{default:0};
