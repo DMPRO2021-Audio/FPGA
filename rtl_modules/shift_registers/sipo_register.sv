@@ -1,4 +1,4 @@
-
+`timescale 1ns/1ps
 // Serial in Parallel out shift register
 //  Signals output_valid on the clock cycle
 //  when the out register is full. Receives
