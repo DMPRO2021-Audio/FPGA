@@ -64,12 +64,12 @@ module fifo_var_delay #(
     input clk,
     input rstn,
     input enable, write,
-    input [15:0] len,
+    input [31:0] len,
     input [WIDTH-1:0] in,
     output [WIDTH-1:0] out
 );
 
-    logic [WIDTH-1:0] queue[0:MAXLEN-1];
+    logic [WIDTH-1:0] queue[0:MAXLEN-1] = '{default:0};
 
     assign out = queue[len-1];
 
