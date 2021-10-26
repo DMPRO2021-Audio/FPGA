@@ -38,7 +38,7 @@ module top(
     logic ck_sck_reg;
     logic output_valid;
 
-    assign clk = CLK100MHZ;             // Rename clock
+    //assign clk = CLK100MHZ;             // Rename clock
 
     initial sample_clk <= 0;
     initial dac_bit_clk <= 0;
@@ -52,10 +52,10 @@ module top(
         wave >= 5 * (`MAX_AMP >> 3),
         wave >= 4 * (`MAX_AMP >> 3)
     };
-    assign led_r[3] = btn[0];
-    assign led_r[2] = output_valid;
-    assign led_r[1] = ck_sck_reg;
-    assign led_b[0] = ~ck_ss | btn[0];  // Turn on when receiving
+    // assign led_r[3] = btn[0];
+    // assign led_r[2] = output_valid;
+    // assign led_r[1] = ck_sck_reg;
+    // assign led_b[0] = ~ck_ss | btn[0];  // Turn on when receiving
 
     logic [31:0] volume;
     logic [31:0] reverb;
@@ -103,16 +103,24 @@ module top(
 
 `ifndef DEBUG
     /* Create correct clock on dev board */
-    clk_wiz_dev clk_wiz (
+    logic logic0, logic1;
+    clk_wiz_dev clk_wiz0 (
         .clk_in(CLK100MHZ),
         .reset(0),
-        .clk_out1(sys_clk),
-        .clk_out2(clk),
-        .locked(locked)
+        .clk_out(sys_clk),
+        .locked(locked0)
     );
+    clk_wiz_dev_0_clk_wiz clk_wiz1 (
+        .clk_in1(CLK100MHZ),
+        .reset(0),
+        .clk_out(clk),
+        .locked(locked1)
+    );
+    assign locked = locked0 && locked1;
+    assign led_r[2:0] = '{locked0, locked1, locked};
 `else
     assign sys_clk = clk;
-    assign locked = 1;
+    assign locked1 = 1;
 `endif
 
     // spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (

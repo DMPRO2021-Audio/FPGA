@@ -27,6 +27,7 @@ place_design
 write_checkpoint -force $output_dir/post_place
 phys_opt_design
 # Route
+update_timing
 route_design
 # Write checkpoint
 write_checkpoint -force $output_dir/post_place
