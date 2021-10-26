@@ -1,34 +1,35 @@
 
-PROJECT   = DMPRO_audio
-BUILD     = ./design_output
-SRC       = ./rtl_modules
-TB        = ./testbenches
-TEST_OUT  = ./test_output
+PROJECT   	= DMPRO_audio
+BUILD     	= ./design_output
+SRC       	= ./rtl_modules
+TB        	= ./testbenches
+TEST_OUT  	= ./test_output
 # Absolute paths because I don't trust Vivado
-SRC_DIR   = $(PWD)/$(SRC)
-BUILD_DIR = $(PWD)/$(BUILD)
-LOGS      = $(PWD)/logs
-CONSTR_DIR= $(PWD)/constraints
-SYNTH_DIR = $(PWD)/logs/synth_$(shell date +"%y%m%d%H%M")
-FLASH_DIR = $(PWD)/logs/flash_$(shell date +"%y%m%d%H%M")
-TEMP_DIR  = $(BUILD_DIR)/tmp
+SRC_DIR   	= $(PWD)/$(SRC)
+BUILD_DIR 	= $(PWD)/$(BUILD)
+LOGS      	= $(PWD)/logs
+CONSTR_DIR	= $(PWD)/constraints
+SYNTH_DIR 	= $(PWD)/logs/synth_$(shell date +"%y%m%d%H%M")
+FLASH_DIR 	= $(PWD)/logs/flash_$(shell date +"%y%m%d%H%M")
+TEMP_DIR  	= $(BUILD_DIR)/tmp
 
 
 # Timestamps
-TS = $(BUILD)/.timestamp_
+TS 	= $(BUILD)/.timestamp_
 
 # Compilers
 SVC = xvlog --sv
-VC = xvlog
+VC 	= xvlog
 
 # Common dependencies to all or most modules
-COMMON_DEPS = $(TS)structures_pkg
+COMMON_DEPS 	= $(TS)structures_pkg
 
 # xvlog workdir, where .sdb files are stored
-WORKLIB_NAME = worklib
-WORKLIB = -work $(WORKLIB_NAME)=$(BUILD)
-INCLUDES = --include $(SRC)
-SV_DEFINES = -d DEBUG=1
+WORKLIB_NAME 	= work
+WORKLIB 		= -work $(WORKLIB_NAME)
+WORKLIB_XELAB 	= -L $(WORKLIB_NAME)
+INCLUDES 		= --include $(SRC)
+SV_DEFINES 		= -d DEBUG=1
 
 # Optionally set optimisation
 ifndef OPT
@@ -80,19 +81,19 @@ $(TS)tb_mixer: $(TB)/tb_mixer.sv $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
 ### Module testbenches ###
 
 tb_fifo: $(TS)tb_fifo $(TS)fifo_delay
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 tb_fifovd: $(TS)tb_fifovd $(TS)fifo_delay
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
-	xsim -L $(WORKLIB_NAME)=$(BUILD) $@_sim -R -nolog 
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xsim $(WORKLIB_XELAB) $@_sim -R -nolog 
 
 tb_clk_downscale: $(TS)tb_clk_downscale
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 tb_dac: $(TS)tb_dac $(TS)dac_transmitter 
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 tb_piso: tb_piso.v ../rtl_modules/shift_registers/piso_register.v 
@@ -101,7 +102,7 @@ tb_piso: tb_piso.v ../rtl_modules/shift_registers/piso_register.v
 	xsim piso_sim -R -nolog
 
 tb_reverb: $(TS)tb_reverb
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 tb_sipo: $(TS)tb_sipo
@@ -110,13 +111,13 @@ tb_sipo: $(TS)tb_sipo
 
 tb_mixer: $(TS)tb_mixer
 	mkdir -p test_output
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 # ! WORKING EXAMPLE
 tb_oscillator: $(TS)tb_oscillator
 	-mkdir -p test_output
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 ### Module targets ###
@@ -213,7 +214,7 @@ top: $(TS)top
 
 tb_top: $(TS)tb_top $(TS)top $(TOP_DEPS) $(COMMON_DEPS)
 	-mkdir -p $(LOGS)
-	xelab -O$(OPT) -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim --log $(LOGS)/top_xelab.log
+	xelab -O$(OPT) $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim --log $(LOGS)/top_xelab.log
 	xsim $@_sim -R --log $(LOGS)/xsim.log -wdb $(BUILD)/$@_waves.wdb $(GUI) --ieeewarnings
 
 
@@ -271,11 +272,13 @@ init:
 	-mkdir -p $(BUILD)
 	-mkdir -p $(LOGS)
 	-mkdir -p $(TEST_OUT)
+	-mkdir -p $()
 
 help:
 	@echo "FPGA makefile"
 	@echo "========================================================================================"
 	@echo "Usage:"
+	@echo "Initialise outputs:"
 	@echo "Synthesise:             make synth"
 	@echo "Flash to FPGA:          make flash"
 	@echo "Build top:              make top"
