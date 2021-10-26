@@ -62,37 +62,35 @@ module top(
     wavegen_t wave_gens[`N_OSCILLATORS];
 
     // Sending to oscillator
-    wavegen_t wave_gen;
+    wavegen_t wave_gen[4];
     //reset_synth_t(wave_gen);
     initial begin
-    wave_gen.freq = `REAL_TO_FREQ_FIXED_POINT(97.9);
-    wave_gen.velocity = 0;
-    wave_gen.shape = SIN;
-    wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;
-
-    wave_gen.envelopes[0].gain = 100;
-    wave_gen.envelopes[0].duration = 4800;
-
-    wave_gen.envelopes[1].gain = 200;
-    wave_gen.envelopes[1].duration = 4800;
-
-    wave_gen.envelopes[2].gain = 300;
-    wave_gen.envelopes[2].duration = 4800;
-
-    wave_gen.envelopes[3].gain = 300;
-    wave_gen.envelopes[3].duration = 2400;
-
-    wave_gen.envelopes[4].gain = 300;
-    wave_gen.envelopes[4].duration = 4800;
-
-    wave_gen.envelopes[5].gain = 100;
-    wave_gen.envelopes[5].duration = 4800;
-
-    wave_gen.envelopes[6].gain = 100;
-    wave_gen.envelopes[6].duration = 3 * 9600;
-
-    wave_gen.envelopes[7].gain = 0;
-    wave_gen.envelopes[7].duration = 4800;
+        wave_gen[0].freq = `REAL_TO_FREQ_FIXED_POINT(110);
+        wave_gen[1].freq = `REAL_TO_FREQ_FIXED_POINT(220);
+        wave_gen[2].freq = `REAL_TO_FREQ_FIXED_POINT(300);
+        wave_gen[3].freq = `REAL_TO_FREQ_FIXED_POINT(360);
+        for (integer i = 0; i < 4; i++) begin
+            wave_gen[i].velocity = 0;
+            wave_gen[i].shape = SIN;
+            wave_gen[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
+            wave_gen[i].envelopes[0].gain = 100;
+            wave_gen[i].envelopes[0].duration = 4800;
+            wave_gen[i].envelopes[1].gain = 200;
+            wave_gen[i].envelopes[1].duration = 4800;
+            wave_gen[i].envelopes[2].gain = 300;
+            wave_gen[i].envelopes[2].duration = 4800;
+            wave_gen[i].envelopes[3].gain = 300;
+            wave_gen[i].envelopes[3].duration = 2400;
+            wave_gen[i].envelopes[4].gain = 300;
+            wave_gen[i].envelopes[4].duration = 4800;
+            wave_gen[i].envelopes[5].gain = 100;
+            wave_gen[i].envelopes[5].duration = 4800;
+            wave_gen[i].envelopes[6].gain = 100;
+            wave_gen[i].envelopes[6].duration = 3 * 9600;
+            wave_gen[i].envelopes[7].gain = 0;
+            wave_gen[i].envelopes[7].duration = 4800;
+            
+        end
     end
 
     logic locked;
@@ -106,9 +104,10 @@ module top(
 `ifndef DEBUG
     /* Create correct clock on dev board */
     clk_wiz_dev clk_wiz (
-        .clk_in(clk),
+        .clk_in(CLK100MHZ),
         .reset(0),
-        .clk_out(sys_clk),
+        .clk_out1(sys_clk),
+        .clk_out2(clk),
         .locked(locked)
     );
 `else
@@ -137,16 +136,29 @@ module top(
         .wave_gens(wave_gens)
     );
 
+    logic signed [23:0] waves[4];
+    generate
+        for (genvar i = 0; i < 4; i++) begin
     oscillator #(.WIDTH(24)) oscillator0(
         .clk(sample_clk),
         .enable(locked),
-        .cmds(wave_gen.cmds),
-        .freq(wave_gen.freq),
-        .envelopes(wave_gen.envelopes),
+        .cmds(wave_gen[i].cmds),
+        .freq(wave_gen[i].freq),
+        .envelopes(wave_gen[i].envelopes),
         .amplitude(200),
         .shape(SIN),
-        .out(wave)
+        .out(waves[i])
+    );    
+        end
+    endgenerate
+    mixer #(.N_WAVEGENS(4))u_mixer(
+    	.clk           (clk           ),
+        .waves         (waves         ),
+        .master_volume (1024 ),
+        .num_enabled   (4   ),
+        .out           (wave           )
     );
+    
     
 
     dac_transmitter #(.WIDTH(24)) transmitter0(

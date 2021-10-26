@@ -35,11 +35,11 @@ top dut(
 );
 
 int sclk_cnt = 0;
-logic [7:0] = 0;
+
 always_ff @(posedge jb[1]) begin
     if (jb[3] == 1) begin
         sclk_cnt ++;
-        
+
     end
     $display("[tb_top] sd = %d, lrclk = %d counter = %d", jb[2], jb[3], sclk_cnt);
 end
