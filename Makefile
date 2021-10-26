@@ -4,6 +4,7 @@ BUILD     = ./design_output
 SRC       = ./rtl_modules
 TB        = ./testbenches
 TEST_OUT  = ./test_output
+SCRIPTS   = ./scripts
 # Absolute paths because I don't trust Vivado
 SRC_DIR   = $(PWD)/$(SRC)
 BUILD_DIR = $(PWD)/$(BUILD)
@@ -26,7 +27,7 @@ COMMON_DEPS = $(TS)structures_pkg
 
 # xvlog workdir, where .sdb files are stored
 WORKLIB_NAME = worklib
-WORKLIB = -work $(WORKLIB_NAME)=$(BUILD)
+WORKLIB = -work $(WORKLIB_NAME)
 INCLUDES = --include $(SRC)
 SV_DEFINES = -d DEBUG=1
 
@@ -110,13 +111,13 @@ tb_sipo: $(TS)tb_sipo
 
 tb_mixer: $(TS)tb_mixer
 	mkdir -p test_output
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab -L $(WORKLIB_NAME) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 # ! WORKING EXAMPLE
 tb_oscillator: $(TS)tb_oscillator
 	-mkdir -p test_output
-	xelab -L $(WORKLIB_NAME)=$(BUILD) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xelab -L $(WORKLIB_NAME) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
 ### Module targets ###
@@ -297,4 +298,7 @@ clean:
 
 purge: clean
 	-rm -rf $(BUILD) $(LOGS) usage_statistics*
+
+plot:
+	python $(SCRIPTS)/plot_oscillator.py
 

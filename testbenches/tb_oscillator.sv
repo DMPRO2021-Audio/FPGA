@@ -34,34 +34,34 @@ module tb_oscillator;
     int fd;
 
     always @ (posedge clk)begin
-        $fwrite(fd, "%d\n", out);
+        $fwrite(fd, "%d\n", out >>> `FIXED_POINT);
     end
 
     initial begin
-        wave_gen.freq = `REAL_TO_FREQ_FIXED_POINT(440);
+        wave_gen.freq = `REAL_TO_FIXED_POINT(440);
         wave_gen.velocity = 0;
-        wave_gen.shape = PIANO;
-        wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;
+        wave_gen.shape = SIN;
+        wave_gen.cmds = (0 << `ENVELOPE_RESET_BIT) | (1 << `WAVEGEN_ENABLE_BIT);
         
-        wave_gen.envelopes[0].gain = 100;
+        wave_gen.envelopes[0].gain = 10;
         wave_gen.envelopes[0].duration = 4800;
 
-        wave_gen.envelopes[1].gain = 200;
+        wave_gen.envelopes[1].gain = 20;
         wave_gen.envelopes[1].duration = 4800;
 
-        wave_gen.envelopes[2].gain = 300;
+        wave_gen.envelopes[2].gain = 30;
         wave_gen.envelopes[2].duration = 4800;
 
-        wave_gen.envelopes[3].gain = 300;
+        wave_gen.envelopes[3].gain = 30;
         wave_gen.envelopes[3].duration = 2400;
 
-        wave_gen.envelopes[4].gain = 300;
+        wave_gen.envelopes[4].gain = 30;
         wave_gen.envelopes[4].duration = 4800;
 
-        wave_gen.envelopes[5].gain = 100;
+        wave_gen.envelopes[5].gain = 10;
         wave_gen.envelopes[5].duration = 4800;
 
-        wave_gen.envelopes[6].gain = 100;
+        wave_gen.envelopes[6].gain = 10;
         wave_gen.envelopes[6].duration = 3 * 9600;
 
         wave_gen.envelopes[7].gain = 0;
@@ -72,7 +72,7 @@ module tb_oscillator;
 
         fd = $fopen("./test_output/oscillator.txt", "w+");
 
-        #600000;
+        #1300000;
 
         $fclose(fd);
 

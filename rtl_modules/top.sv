@@ -65,7 +65,7 @@ module top(
     wavegen_t wave_gen;
     //reset_synth_t(wave_gen);
     initial begin
-    wave_gen.freq = `REAL_TO_FREQ_FIXED_POINT(97.9);
+    wave_gen.freq = `REAL_TO_FIXED_POINT(97.9);
     wave_gen.velocity = 0;
     wave_gen.shape = SIN;
     wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;

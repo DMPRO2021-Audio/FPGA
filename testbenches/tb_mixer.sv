@@ -12,8 +12,8 @@ module tb_mixer;
 
     localparam WIDTH = 24;
 
-    logic signed [23:0] out;
-    logic signed [WIDTH-1:0] waves [`N_OSCILLATORS];
+    logic signed [WIDTH + `FIXED_POINT - 1:0] out;
+    logic signed [WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
     logic signed [31:0] num_enabled = 3;
 
     synth_t synth;
@@ -30,7 +30,7 @@ module tb_mixer;
                 .cmds(synth.wave_gens[i].cmds), 
                 .freq(synth.wave_gens[i].freq),
                 .envelopes(synth.wave_gens[i].envelopes),
-                .amplitude(1000),
+                .amplitude(24'd1000),
                 .shape(synth.wave_gens[i].shape),
                 .out(waves[i])
             );
@@ -49,14 +49,14 @@ module tb_mixer;
     int fd;
 
     always @ (posedge clk)begin
-        $fwrite(fd, "%d\n", out);
+        $fwrite(fd, "%d\n", `FIXED_POINT_TO_SAMPLE_WIDTH(out));
     end
 
     initial begin
 
         reset_synth_t(synth);
 
-        synth.volume = 1024;
+        synth.volume = 1 << `FIXED_POINT;
 
         for(int i = 0; i < `N_OSCILLATORS; i++) begin
 
@@ -86,9 +86,9 @@ module tb_mixer;
         synth.wave_gens[2].cmds <= 8'b10;
 
         // Set frequencies of 0-2
-        synth.wave_gens[0].freq <= `REAL_TO_FREQ_FIXED_POINT(440);
-        synth.wave_gens[1].freq <= `REAL_TO_FREQ_FIXED_POINT(329.63);
-        synth.wave_gens[2].freq <= `REAL_TO_FREQ_FIXED_POINT(277.18);
+        synth.wave_gens[0].freq <= `REAL_TO_FIXED_POINT(440);
+        synth.wave_gens[1].freq <= `REAL_TO_FIXED_POINT(329.63);
+        synth.wave_gens[2].freq <= `REAL_TO_FIXED_POINT(277.18);
 
         $strobe("Playing %d", synth.wave_gens[0].freq);
         $strobe("Playing %d", synth.wave_gens[1].freq);
@@ -119,9 +119,9 @@ module tb_mixer;
         synth.wave_gens[5].cmds <= 8'b10;        
 
         // Set frequencies of 3-5
-        synth.wave_gens[3].freq <= `REAL_TO_FREQ_FIXED_POINT(440);
-        synth.wave_gens[4].freq <= `REAL_TO_FREQ_FIXED_POINT(329.63);
-        synth.wave_gens[5].freq <= `REAL_TO_FREQ_FIXED_POINT(261.63);
+        synth.wave_gens[3].freq <= `REAL_TO_FIXED_POINT(440);
+        synth.wave_gens[4].freq <= `REAL_TO_FIXED_POINT(329.63);
+        synth.wave_gens[5].freq <= `REAL_TO_FIXED_POINT(261.63);
 
         $strobe("Playing %d", synth.wave_gens[3].freq);
         $strobe("Playing %d", synth.wave_gens[4].freq);
@@ -147,9 +147,9 @@ module tb_mixer;
         synth.wave_gens[8].cmds <= 8'b10;
 
         // Set frequencies of oscillators 6-8
-        synth.wave_gens[6].freq <= `REAL_TO_FREQ_FIXED_POINT(392);
-        synth.wave_gens[7].freq <= `REAL_TO_FREQ_FIXED_POINT(329.63);
-        synth.wave_gens[8].freq <= `REAL_TO_FREQ_FIXED_POINT(261.63);
+        synth.wave_gens[6].freq <= `REAL_TO_FIXED_POINT(392);
+        synth.wave_gens[7].freq <= `REAL_TO_FIXED_POINT(329.63);
+        synth.wave_gens[8].freq <= `REAL_TO_FIXED_POINT(261.63);
 
         $strobe("Playing %d", synth.wave_gens[6].freq);
         $strobe("Playing %d", synth.wave_gens[7].freq);
@@ -171,7 +171,7 @@ module tb_mixer;
         synth.wave_gens[9].cmds <= 8'b10;
 
         // Set frequency of 9
-        synth.wave_gens[9].freq <= `REAL_TO_FREQ_FIXED_POINT(207.65);
+        synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207.65);
         
         #1500000;
 
@@ -183,7 +183,7 @@ module tb_mixer;
         synth.wave_gens[9].cmds <= 8'b10;
 
         // Set frequency of 9
-        synth.wave_gens[9].freq <= `REAL_TO_FREQ_FIXED_POINT(207);
+        synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207);
 
         #1500000;
         $fclose(fd);

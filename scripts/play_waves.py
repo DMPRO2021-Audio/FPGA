@@ -4,7 +4,7 @@ import sys
 
 sample_rate = 48000 # Hz
 
-path = sys.argv[1] if len(sys.argv) > 1 else "../testbenches/test_output/oscillator.txt"
+path = sys.argv[1] if len(sys.argv) > 1 else "./test_output/oscillator.txt"
 
 
 # Import generated waves

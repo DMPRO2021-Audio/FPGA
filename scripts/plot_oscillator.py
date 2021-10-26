@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-y = np.genfromtxt("../testbenches/test_output/oscillator.txt", delimiter=",", unpack=True)
+y = np.genfromtxt("./test_output/oscillator.txt", delimiter=",", unpack=True)
 x = np.linspace(0, len(y), len(y))
 
 fig = plt.figure(figsize=(12,6))

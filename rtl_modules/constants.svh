@@ -29,15 +29,9 @@
 `define SAMPLE_WIDTH 24         // Width of samples when sent to DAC
 `define FIXED_POINT 8       // Fixed decimal precision for internal computation
 // Convert and round a fixed precision decimal to a sample width int
-`define FIXED_POINT_TO_SAMPLE_WIDTH(val) ((val >>> `FIXED_POINT) + val[`FIXED_POINT-1])
+`define FIXED_POINT_TO_SAMPLE_WIDTH(val) ((signed'(val + val[`FIXED_POINT-1])) >>> `FIXED_POINT)
 `define REAL_TO_FIXED_POINT(freq) int'(freq * (1 <<< `FIXED_POINT))
 `define SF 2.0**-`FIXED_POINT
-`ifndef FIXED_POINTS
-`define FIXED_POINTS
-`define VOLUME_FIXED_POINT 10   // ! Deprecated @see FIXED_PRECISION
-`define FREQ_FIXED_POINT 10     // ! Deprecated @see FIXED_PRECISION
-`define REAL_TO_FREQ_FIXED_POINT(freq) int'(freq * (1 <<< `FREQ_FIXED_POINT))
-`endif
 
 `ifndef MAX_FILTER_FIFO_LENGTH
 // Maximum length of variable fifos in filters, will affect their space consumption.
