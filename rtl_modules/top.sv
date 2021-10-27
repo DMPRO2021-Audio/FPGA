@@ -8,6 +8,7 @@ import protocol_pkg::*;
 import shape_pkg::*;
 
 `define MAX_AMP ((1 << 22) - 1)
+
 // Assign pins and instantiate design
 module top(
     input logic CLK100MHZ,
@@ -22,6 +23,49 @@ module top(
     output logic [3:0] jb                   // Output to DAC
 );
     /* Declare variables */
+
+    /* Note values C3 to B5 */
+    integer n[37];
+    initial n = '{
+        `REAL_TO_FIXED_POINT(130.813), 
+        `REAL_TO_FIXED_POINT(138.591), 
+        `REAL_TO_FIXED_POINT(146.832), 
+        `REAL_TO_FIXED_POINT(155.563), 
+        `REAL_TO_FIXED_POINT(164.814), 
+        `REAL_TO_FIXED_POINT(174.614), 
+        `REAL_TO_FIXED_POINT(184.997), 
+        `REAL_TO_FIXED_POINT(195.998), 
+        `REAL_TO_FIXED_POINT(207.652), 
+        `REAL_TO_FIXED_POINT(220.000), 
+        `REAL_TO_FIXED_POINT(233.082), 
+        `REAL_TO_FIXED_POINT(246.942),
+        `REAL_TO_FIXED_POINT(261.626), 
+        `REAL_TO_FIXED_POINT(277.183), 
+        `REAL_TO_FIXED_POINT(293.665), 
+        `REAL_TO_FIXED_POINT(311.127), 
+        `REAL_TO_FIXED_POINT(329.628), 
+        `REAL_TO_FIXED_POINT(349.228), 
+        `REAL_TO_FIXED_POINT(369.994), 
+        `REAL_TO_FIXED_POINT(391.995), 
+        `REAL_TO_FIXED_POINT(415.305), 
+        `REAL_TO_FIXED_POINT(440.000), 
+        `REAL_TO_FIXED_POINT(466.164), 
+        `REAL_TO_FIXED_POINT(493.883),
+        `REAL_TO_FIXED_POINT(523.251), 
+        `REAL_TO_FIXED_POINT(554.365), 
+        `REAL_TO_FIXED_POINT(587.330), 
+        `REAL_TO_FIXED_POINT(622.254), 
+        `REAL_TO_FIXED_POINT(659.255), 
+        `REAL_TO_FIXED_POINT(698.456), 
+        `REAL_TO_FIXED_POINT(739.989), 
+        `REAL_TO_FIXED_POINT(783.991), 
+        `REAL_TO_FIXED_POINT(830.609), 
+        `REAL_TO_FIXED_POINT(880.000), 
+        `REAL_TO_FIXED_POINT(932.328), 
+        `REAL_TO_FIXED_POINT(987.767),
+        `REAL_TO_FIXED_POINT(0.00000)
+    };
+
 
     logic clk;                          // Main internal clock
     logic sample_clk;                   // Clock at the sampling frequency
@@ -46,12 +90,12 @@ module top(
     // Mapping the leds to the upper part of the wave
     // This is only used for debugging and to show that the wave is generated
     logic signed [23:0] wave;
-    assign led = {
-        wave >= 7 * (`MAX_AMP >> 3),
-        wave >= 6 * (`MAX_AMP >> 3),
-        wave >= 5 * (`MAX_AMP >> 3),
-        wave >= 4 * (`MAX_AMP >> 3)
-    };
+    // assign led = {
+    //     wave >= 7 * (`MAX_AMP >> 3),
+    //     wave >= 6 * (`MAX_AMP >> 3),
+    //     wave >= 5 * (`MAX_AMP >> 3),
+    //     wave >= 4 * (`MAX_AMP >> 3)
+    // };
     assign led_r[3] = btn[0];
     assign led_r[2] = output_valid;
     assign led_r[1] = ck_sck_reg;
@@ -63,9 +107,7 @@ module top(
 
     // Sending to oscillator
     wavegen_t wave_gen;
-    //reset_synth_t(wave_gen);
     initial begin
-    wave_gen.freq = `REAL_TO_FIXED_POINT(97.9);
     wave_gen.velocity = 0;
     wave_gen.shape = SIN;
     wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;
@@ -94,6 +136,31 @@ module top(
     wave_gen.envelopes[7].gain = 0;
     wave_gen.envelopes[7].duration = 4800;
     end
+
+    /* Sample tunes */
+    integer tbt_normalen_pitch[54] = '{16, 17, 19, 19, 21, 16, 12, 12, 9, 9, 12, 12, 14, 15, 14, 12, 19, 19, 19, 21, 22, 21, 22, 21, 19, 36, 16, 17, 19, 19, 19, 21, 16, 12, 12, 9, 9, 12, 12, 14, 15, 14, 12, 12, 17, 17, 17, 19, 16, 12, 12, 9, 12, 36};
+    // length in 8ths
+    integer tbt_normalen_len[54]   = '{1,  1,  2,  1,  1,  1,  1,  1, 1, 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  1,  2,  4,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 4,  4 };
+    integer tbt_normalen_tempo = 116 * 2; // 116 bpm to 8ths
+    initial wave_gen.freq = tbt_normalen_pitch[0];
+
+    integer counter = 0;
+    integer idx = 0;
+    integer tones[4] = '{12, 16, 19, 16};
+    always @(posedge sample_clk) begin
+        if (counter >= (`SAMPLE_RATE * 60 / tbt_normalen_tempo) * tbt_normalen_len[idx]) begin
+            counter <= 0;
+            idx <= (idx + 1) % 54;
+            wave_gen.cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
+        end
+        else begin
+            wave_gen.cmds <= wave_gen.cmds | 0 << `ENVELOPE_RESET_BIT;
+            wave_gen.freq <= n[tbt_normalen_pitch[idx]];
+            counter <= counter + 1;
+        end
+    end
+    assign led[1:0] = idx[1:0];
+    /* End sample tunes */
 
     logic locked;
 
