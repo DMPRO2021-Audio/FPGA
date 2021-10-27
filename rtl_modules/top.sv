@@ -108,29 +108,29 @@ module top(
     // Sending to oscillator
     wavegen_t wave_gen;
     initial begin
-    wave_gen.velocity = 0;
-    wave_gen.shape = SIN;
-    wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT || 1 << `WAVEGEN_ENABLE_BIT;
+    wave_gen.velocity = 200;
+    wave_gen.shape = PIANO;
+    wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
 
-    wave_gen.envelopes[0].gain = 100;
-    wave_gen.envelopes[0].duration = 4800;
+    wave_gen.envelopes[0].gain = 0;
+    wave_gen.envelopes[0].duration = 1200;
 
-    wave_gen.envelopes[1].gain = 200;
-    wave_gen.envelopes[1].duration = 4800;
+    wave_gen.envelopes[1].gain = 20;
+    wave_gen.envelopes[1].duration = 1200;
 
-    wave_gen.envelopes[2].gain = 300;
-    wave_gen.envelopes[2].duration = 4800;
+    wave_gen.envelopes[2].gain = 40;
+    wave_gen.envelopes[2].duration = 1200;
 
-    wave_gen.envelopes[3].gain = 300;
+    wave_gen.envelopes[3].gain = 30;
     wave_gen.envelopes[3].duration = 2400;
 
-    wave_gen.envelopes[4].gain = 300;
+    wave_gen.envelopes[4].gain = 30;
     wave_gen.envelopes[4].duration = 4800;
 
-    wave_gen.envelopes[5].gain = 100;
+    wave_gen.envelopes[5].gain = 10;
     wave_gen.envelopes[5].duration = 4800;
 
-    wave_gen.envelopes[6].gain = 100;
+    wave_gen.envelopes[6].gain = 10;
     wave_gen.envelopes[6].duration = 3 * 9600;
 
     wave_gen.envelopes[7].gain = 0;
@@ -154,12 +154,12 @@ module top(
             wave_gen.cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
         end
         else begin
-            wave_gen.cmds <= wave_gen.cmds | 0 << `ENVELOPE_RESET_BIT;
+            wave_gen.cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
             wave_gen.freq <= n[tbt_normalen_pitch[idx]];
             counter <= counter + 1;
         end
     end
-    assign led[1:0] = idx[1:0];
+    assign led[3:0] = idx[3:0];
     /* End sample tunes */
 
     logic locked;
@@ -210,7 +210,7 @@ module top(
         .cmds(wave_gen.cmds),
         .freq(wave_gen.freq),
         .envelopes(wave_gen.envelopes),
-        .amplitude(200),
+        .amplitude(wave_gen.velocity),
         .shape(SIN),
         .out(wave)
     );
