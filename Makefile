@@ -30,7 +30,7 @@ WORKLIB_NAME 	= work
 WORKLIB 		= -work $(WORKLIB_NAME)
 WORKLIB_XELAB 	= -L $(WORKLIB_NAME)
 INCLUDES 		= --include $(SRC)
-SV_DEFINES 		= -d DEBUG=1
+SV_DEFINES 		= -d DEBUG
 
 # Optionally set optimisation
 ifndef OPT
