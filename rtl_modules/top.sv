@@ -11,16 +11,21 @@ import shape_pkg::*;
 
 // Assign pins and instantiate design
 module top(
-    input logic CLK100MHZ,
+    input logic CLK48MHZ,
 
-    input logic ck_mosi, ck_sck, ck_ss,     // SPI
-    output logic ck_miso,                   // SPI
+    //input logic ck_mosi, ck_sck, ck_ss,     // SPI
+    //output logic ck_miso,                   // SPI
 
-    input logic [3:0] btn,
+    //input logic [3:0] btn,
 
-    (* mark_debug="true" *) output logic [3:0] led,
-    output logic [3:0] led_r, led_g, led_b,
-    output logic [3:0] jb                   // Output to DAC
+    //(* mark_debug="true" *) output logic [3:0] led,
+
+    output logic dac_bit_clk,
+    output logic dac_rl_clk,
+    output logic dac_sys_clk,
+    output logic dac_data,
+
+    output logic [7:0] gpio
 );
     /* Declare variables */
 
@@ -73,23 +78,34 @@ module top(
 
     logic clk;                          // Main internal clock
     logic sample_clk;                   // Clock at the sampling frequency
-    logic dac_bit_clk;                  // Serial data clock for the dac-transmitter
+    
+    logic sclk;
+    logic dac_bit_clk0;                  // Serial data clock for the dac-transmitter
     logic sys_clk;                      // DAC System clock of the DAC ~18MHz
-    logic lrclk;                        // DAC LR select
-    logic sclk;                         // DAC serial clock/bit clock/data clock out
-    logic sd;                           // DAC serial data
+    logic lrclk0;                        // DAC LR select
+    logic sd0;                           // DAC serial data
 
-    logic rstn;
-    logic[`SPI_WIDTH-1:0] recv;         // Receiving register
-    logic[3:0] led_val = 15;            // Just an initial value: all leds on
-    logic[`SPI_WIDTH-1:0] send;         // Dummy send register (functionality not yet implemented
-    logic ck_sck_reg;
-    logic output_valid;
+    assign gpio[0] = sclk;
+    assign gpio[1] = sys_clk;
+    assign gpio[2] = lrclk0;
+    assign gpio[3] = sd0;
 
-    assign clk = CLK100MHZ;             // Rename clock
+    assign dac_bit_clk = sclk;
+    assign dac_sys_clk = sys_clk;
+    assign dac_rl_clk = rlclk0;
+    assign dac_data = sd0;
+
+    //logic rstn;
+    //logic[`SPI_WIDTH-1:0] recv;         // Receiving register
+    //logic[3:0] led_val = 15;            // Just an initial value: all leds on
+    //logic[`SPI_WIDTH-1:0] send;         // Dummy send register (functionality not yet implemented
+    //logic ck_sck_reg;
+    //logic output_valid;
+
+    assign clk = CLK48MHZ;             // Rename clock
 
     initial sample_clk <= 0;
-    initial dac_bit_clk <= 0;
+    initial dac_bit_clk0 <= 0;
 
     // Mapping the leds to the upper part of the wave
     // This is only used for debugging and to show that the wave is generated
@@ -99,15 +115,15 @@ module top(
     //     wave >= 5 * (`MAX_AMP >> 3),
     //     wave >= 4 * (`MAX_AMP >> 3)
     // };
-    assign led_r[3] = btn[0];
+    /* assign led_r[3] = btn[0];
     assign led_r[2] = output_valid;
     assign led_r[1] = ck_sck_reg;
     assign led_b[0] = ~ck_ss | btn[0];  // Turn on when receiving
-
+ */
     logic [31:0] volume;
     logic [31:0] reverb;
 
-    // Enable panning by holding btn3 or btn2 and pressing btn1
+/*     // Enable panning by holding btn3 or btn2 and pressing btn1
     logic signed [31:0] lr_weight = `REAL_TO_FIXED_POINT(0);
     always_ff @(posedge btn[1]) begin
         if(btn[3] && lr_weight > `REAL_TO_FIXED_POINT(-1.0)) begin
@@ -115,7 +131,7 @@ module top(
         end else if(btn[2] && lr_weight < `REAL_TO_FIXED_POINT(1.0)) begin
             lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(0.1);
         end
-    end
+    end */
     
 
     wavegen_t wave_gens[2];
@@ -184,7 +200,7 @@ module top(
             counter <= counter + 1;
         end
     end
-    assign led[3:0] = idx[3:0];
+    //assign led[3:0] = idx[3:0];
     /* End sample tunes */
 
     logic locked;
@@ -197,7 +213,7 @@ module top(
 
 `ifndef DEBUG
     /* Create correct clock on dev board */
-    clk_wiz_dev clk_wiz (
+    clk_wiz clk_wiz (
         .clk_in(clk),
         .reset(0),
         .clk_out(sys_clk),
@@ -268,38 +284,15 @@ module top(
     );
 
     dac_transmitter #(.WIDTH(`SAMPLE_WIDTH)) transmitter0(
-        .clk(dac_bit_clk),
+        .clk(dac_bit_clk0),
         .enable(locked),
         .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(left)),
         .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(right)),
 
         .sclk(sclk),   // Serial data clock
-        .lrclk(lrclk),  // Left right channel select
-        .sd(sd)
+        .lrclk(rlclk0),  // Left right channel select
+        .sd(sd0)
     );
-
-    assign jb[0] = sys_clk; // DAC system clock
-    assign jb[1] = sclk;    // Serial clock
-    assign jb[2] = sd;      // Serial data
-    assign jb[3] = lrclk;   // Left right clock
-    integer sclk_cnt = 0;
-    always_ff @(posedge sclk) begin
-        sclk_cnt ++;
-        $display("[top] sd = %d, lrclk = %d counter = %d expected value = %x", sd, lrclk, sclk_cnt, wave);
-    end
-
-    /* Define always blocks */
-
-    // Assign led values
-/*     always_ff @(posedge clk) begin
-        if (output_valid) begin
-            //led_val <= recv[3:0];
-`ifdef DEBUG
-            $display("[top] output_valid=1, recv=%x", recv);
-`endif
-        end
-    end */
-
 
     /*
         Deriving the sample clock (48 KHz) and
@@ -323,7 +316,7 @@ module top(
         // Dividing the clock frequency by 8
         if(dac_bit_clk_counter >= 3) begin
             dac_bit_clk_counter <= 0;
-            dac_bit_clk <= ~dac_bit_clk;
+            dac_bit_clk0 <= ~dac_bit_clk0;
         end
     end
 

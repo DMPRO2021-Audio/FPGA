@@ -26,9 +26,9 @@ read_verilog -sv [glob $source_dir/mixer.sv]
 read_verilog -sv [glob $source_dir/pan.sv]
 
 # Use this when using 48MHz clock
-#read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]  
+read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]  
 # Use this when using 100MHz clock (devboard)
-read_verilog [glob $source_dir/clk_wiz/clk_wiz_dev.v] 
+#read_verilog [glob $source_dir/clk_wiz/clk_wiz_dev.v] 
 
 # ! top is loaded last
 read_verilog -sv [glob $source_dir/top.sv]
