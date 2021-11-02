@@ -30,7 +30,7 @@
 `define FIXED_POINT 8       // Fixed decimal precision for internal computation
 // Convert and round a fixed precision decimal to a sample width int
 `define FIXED_POINT_TO_SAMPLE_WIDTH(val) ((signed'(val + val[`FIXED_POINT-1])) >>> `FIXED_POINT)
-`define REAL_TO_FIXED_POINT(freq) int'(freq * (1 <<< `FIXED_POINT))
+`define REAL_TO_FIXED_POINT(val) int'(val * (1 <<< `FIXED_POINT))
 `define SF 2.0**-`FIXED_POINT
 
 `ifndef MAX_FILTER_FIFO_LENGTH

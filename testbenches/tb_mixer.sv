@@ -64,20 +64,20 @@ module tb_mixer;
             synth.wave_gens[i].freq = 0;
 
             synth.wave_gens[i].envelopes[0].duration = 3000;
-            synth.wave_gens[i].envelopes[0].gain = 0;
+            synth.wave_gens[i].envelopes[0].gain = `REAL_TO_FIXED_POINT(0);
             
             synth.wave_gens[i].envelopes[1].duration = 3000;
-            synth.wave_gens[i].envelopes[1].gain = 125;
+            synth.wave_gens[i].envelopes[1].gain = `REAL_TO_FIXED_POINT(2);
 
             synth.wave_gens[i].envelopes[2].duration = 1000;
-            synth.wave_gens[i].envelopes[2].gain = 75;
+            synth.wave_gens[i].envelopes[2].gain = `REAL_TO_FIXED_POINT(1);
 
             for(int ii = 3; ii < `ENVELOPE_LEN; ii++) begin
                 synth.wave_gens[i].envelopes[ii].duration = 15000;
-                synth.wave_gens[i].envelopes[ii].gain = 75;
+                synth.wave_gens[i].envelopes[ii].gain = `REAL_TO_FIXED_POINT(0.5);
             end
         
-            synth.wave_gens[i].envelopes[7].gain = 0;
+            synth.wave_gens[i].envelopes[7].gain = `REAL_TO_FIXED_POINT(0);
         end
 
         // Enable to oscillators 0-2

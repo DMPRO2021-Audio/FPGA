@@ -25,7 +25,7 @@ module top(
     /* Declare variables */
 
     /* Note values C3 to B5 */
-    integer n[37];
+    integer n[41];
     initial n = '{
         `REAL_TO_FIXED_POINT(130.813), 
         `REAL_TO_FIXED_POINT(138.591), 
@@ -63,6 +63,10 @@ module top(
         `REAL_TO_FIXED_POINT(880.000), 
         `REAL_TO_FIXED_POINT(932.328), 
         `REAL_TO_FIXED_POINT(987.767),
+        `REAL_TO_FIXED_POINT(0.00000),
+        `REAL_TO_FIXED_POINT(0.00000),
+        `REAL_TO_FIXED_POINT(0.00000),
+        `REAL_TO_FIXED_POINT(0.00000),
         `REAL_TO_FIXED_POINT(0.00000)
     };
 
@@ -89,7 +93,6 @@ module top(
 
     // Mapping the leds to the upper part of the wave
     // This is only used for debugging and to show that the wave is generated
-    logic signed [23:0] wave;
     // assign led = {
     //     wave >= 7 * (`MAX_AMP >> 3),
     //     wave >= 6 * (`MAX_AMP >> 3),
@@ -103,38 +106,46 @@ module top(
 
     logic [31:0] volume;
     logic [31:0] reverb;
-    wavegen_t wave_gens[`N_OSCILLATORS];
+
+    wavegen_t wave_gens[2];
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] wave;
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [2];
 
     // Sending to oscillator
     wavegen_t wave_gen;
     initial begin
-    wave_gen.velocity = 200;
-    wave_gen.shape = PIANO;
-    wave_gen.cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
+        integer i;
 
-    wave_gen.envelopes[0].gain = 0;
-    wave_gen.envelopes[0].duration = 1200;
+        for(i = 0; i < 2; i++) begin
+            wave_gens[i].velocity = 1000000;
+            wave_gens[i].shape = PIANO;
+            wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
 
-    wave_gen.envelopes[1].gain = 20;
-    wave_gen.envelopes[1].duration = 1200;
+            wave_gens[i].envelopes[0].gain = `REAL_TO_FIXED_POINT(0);
+            wave_gens[i].envelopes[0].duration = 1200;
 
-    wave_gen.envelopes[2].gain = 40;
-    wave_gen.envelopes[2].duration = 1200;
+            wave_gens[i].envelopes[1].gain = `REAL_TO_FIXED_POINT(2);
+            wave_gens[i].envelopes[1].duration = 1200;
 
-    wave_gen.envelopes[3].gain = 30;
-    wave_gen.envelopes[3].duration = 2400;
+            wave_gens[i].envelopes[2].gain = `REAL_TO_FIXED_POINT(1.5);
+            wave_gens[i].envelopes[2].duration = 1200;
 
-    wave_gen.envelopes[4].gain = 30;
-    wave_gen.envelopes[4].duration = 4800;
+            wave_gens[i].envelopes[3].gain = `REAL_TO_FIXED_POINT(1);
+            wave_gens[i].envelopes[3].duration = 2400;
 
-    wave_gen.envelopes[5].gain = 10;
-    wave_gen.envelopes[5].duration = 4800;
+            wave_gens[i].envelopes[4].gain = `REAL_TO_FIXED_POINT(1);
+            wave_gens[i].envelopes[4].duration = 4800;
 
-    wave_gen.envelopes[6].gain = 10;
-    wave_gen.envelopes[6].duration = 3 * 9600;
+            wave_gens[i].envelopes[5].gain = `REAL_TO_FIXED_POINT(0.5);
+            wave_gens[i].envelopes[5].duration = 4800;
 
-    wave_gen.envelopes[7].gain = 0;
-    wave_gen.envelopes[7].duration = 4800;
+            wave_gens[i].envelopes[6].gain = `REAL_TO_FIXED_POINT(0.25);
+            wave_gens[i].envelopes[6].duration = 3 * 9600;
+
+            wave_gens[i].envelopes[7].gain = `REAL_TO_FIXED_POINT(1);
+            wave_gens[i].envelopes[7].duration = 4800;
+        end
+    
     end
 
     /* Sample tunes */
@@ -151,11 +162,14 @@ module top(
         if (counter >= (`SAMPLE_RATE * 60 / tbt_normalen_tempo) * tbt_normalen_len[idx]) begin
             counter <= 0;
             idx <= (idx + 1) % 54;
-            wave_gen.cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
+            wave_gens[0].cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
+            wave_gens[1].cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
         end
         else begin
-            wave_gen.cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
-            wave_gen.freq <= n[tbt_normalen_pitch[idx]];
+            wave_gens[0].cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
+            wave_gens[1].cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
+            wave_gens[0].freq <= n[tbt_normalen_pitch[idx]];
+            wave_gens[1].freq <= n[tbt_normalen_pitch[idx] + 4];
             counter <= counter + 1;
         end
     end
@@ -194,7 +208,7 @@ module top(
     //     .output_valid(output_valid)
     // );
 
-    control_unit cu0 (
+/*     control_unit cu0 (
         .sig_in(recv),
         .clk(clk),
         .enable(output_valid),
@@ -202,30 +216,46 @@ module top(
         .volume(volume),
         .reverb(reverb),
         .wave_gens(wave_gens)
-    );
+    ); */
 
-    oscillator #(.WIDTH(24)) oscillator0(
+    generate;
+        genvar i;
+
+        for(i = 0; i < 2; i++) begin
+            oscillator #(.WIDTH(`SAMPLE_WIDTH)) oscillator(
+                .clk(sample_clk),
+                .enable(1),
+                .cmds(wave_gens[i].cmds), 
+                .freq(wave_gens[i].freq),
+                .envelopes(wave_gens[i].envelopes),
+                .amplitude(24'(wave_gens[i].velocity)),
+                .shape(wave_gens[i].shape),
+                .out(waves[i])
+            );
+        end
+
+    endgenerate  
+
+    mixer #(.WIDTH(`SAMPLE_WIDTH), .N_WAVEGENS(2)) mixer(
         .clk(sample_clk),
-        .enable(locked),
-        .cmds(wave_gen.cmds),
-        .freq(wave_gen.freq),
-        .envelopes(wave_gen.envelopes),
-        .amplitude(wave_gen.velocity),
-        .shape(SIN),
+        .waves(waves),
+        .master_volume(`REAL_TO_FIXED_POINT(1)),
+        .num_enabled(2),
+        
         .out(wave)
     );
-    
 
     dac_transmitter #(.WIDTH(24)) transmitter0(
         .clk(dac_bit_clk),
         .enable(locked),
-        .left_data(wave),
-        .right_data(wave),
+        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(wave)),
+        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(wave)),
 
         .sclk(sclk),   // Serial data clock
         .lrclk(lrclk),  // Left right channel select
         .sd(sd)
     );
+
     assign jb[0] = sys_clk; // DAC system clock
     assign jb[1] = sclk;    // Serial clock
     assign jb[2] = sd;      // Serial data
@@ -239,14 +269,14 @@ module top(
     /* Define always blocks */
 
     // Assign led values
-    always_ff @(posedge clk) begin
+/*     always_ff @(posedge clk) begin
         if (output_valid) begin
             //led_val <= recv[3:0];
 `ifdef DEBUG
             $display("[top] output_valid=1, recv=%x", recv);
 `endif
         end
-    end
+    end */
 
 
     /*
