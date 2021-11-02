@@ -2,9 +2,7 @@
 
 `include "constants.svh"
 
-`define MIN_FREQUENCY 16
 `define MAX_AMPLITUDE ((1 << (WIDTH + `FIXED_POINT)) - 1)
-`define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
 
 import shape_pkg::*;
 import protocol_pkg::*;
@@ -29,7 +27,7 @@ module oscillator
     logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index = 0;
     
     logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val = 0;
-    assign out = (out_val * amplitude * envelope_gain) >>> (WIDTH-1); //The bitshift is dividing by the max amplitude
+    assign out = (out_val * amplitude * envelope_gain) >>> ((WIDTH-1) + `FIXED_POINT); //The bitshift is dividing by the max amplitude
 
     // This lookuptable contains the sin values at the maximum amplitude
     // to maintain as much detail as possible in the sample
