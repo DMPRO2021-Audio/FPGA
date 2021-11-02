@@ -48,14 +48,13 @@ in -+-[add]--[delay(tau)]-+-[mul(1-g^2)]--[add]-- out
 `define NGAIN  `NFILT + 1       // Total number of gain values (generally n filters + 1)
 module reverberator_core #(
     parameter WIDTH    = 24,    // Integer width
-    parameter MAXDELAY = `MAX_FILTER_FIFO_LENGTH,
-    parameter CLK_FRQ  = `CLK_FRQ
+    parameter MAXDELAY = `MAX_FILTER_FIFO_LENGTH
 ) (
     // clk: system clock
     // enable: ignored
     // rstn: propagated/ingnored
     // write: configurations are updated on posedge of write
-    input logic clk, enable, rstn, write,
+    input logic clk, sample_clk, enable, rstn, write,
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau[`NTAU],  // Array of tau delay values
     input logic signed [WIDTH+`FIXED_POINT-1:0] gain[`NGAIN], // Array of g gain values
@@ -70,19 +69,6 @@ module reverberator_core #(
     logic signed [WORD-1:0] gain7;
     logic signed [WORD-1:0] out_reg = 0;
     logic signed [WORD-1:0] in_reg = 0;
-
-    logic sample_clk;
-
-    localparam sf = 2.0**-`FIXED_POINT;
-
-    clk_downscale #(
-        .FREQ_IN  (CLK_FRQ  ),
-        .FREQ_OUT (`SAMPLE_RATE )
-    )
-    u_clk_downscale(
-    	.clk_in  (clk  ),
-        .clk_out (sample_clk )
-    );
 
     generate;
         genvar i;

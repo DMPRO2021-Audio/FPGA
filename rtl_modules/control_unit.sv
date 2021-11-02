@@ -30,7 +30,7 @@ parameter WORD = 32                 // Word size
     output logic    [WORD-1:0]       volume,
     output logic    [WORD-1:0]       reverb,
     /* Array of oscillators */
-    output wavegen_t wave_gens[`N_OSCILLATORS]
+    output wavegen_t [0:`N_OSCILLATORS-1] wave_gens
 );
 
     /* Wires and internal registers */
@@ -39,7 +39,7 @@ parameter WORD = 32                 // Word size
 
     integer counter = 0;
 
-    assign volume = conf.volume;
+    assign volume = conf.master_volume;
     assign reverb = conf.reverb;
 
     for (genvar i = 0; i < `N_OSCILLATORS; i++) begin

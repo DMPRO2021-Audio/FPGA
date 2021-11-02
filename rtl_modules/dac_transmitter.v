@@ -16,7 +16,6 @@ module dac_transmitter
     input [WIDTH-1:0] left_data,    // Date from the left channel
     input [WIDTH-1:0] right_data,   // Data from the right channel
 
-    output sclk,    // Serial clock
     output lrclk,   // Left / right world select (high = left)
     output sd       // Serial data
 );
@@ -32,7 +31,6 @@ module dac_transmitter
 
     assign lrclk = lrclk_reg;
     assign sd = (lrclk_reg ? left_shift_reg[WIDTH-1] : right_shift_reg[WIDTH-1]);
-    assign sclk = clk;
 
     always @(negedge(clk)) begin
         if(enable) begin

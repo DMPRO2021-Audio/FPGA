@@ -28,21 +28,19 @@
 `define SPI_WIDTH 8
 `endif
 
-`ifndef CMD_BITS
 `define ENVELOPE_RESET_BIT 0
 `define WAVEGEN_ENABLE_BIT 1
 `define CMD_BITS
-`endif
 
-`define SAMPLE_WIDTH 24         // Width of samples when sent to DAC
-`define FIXED_POINT 8       // Fixed decimal precision for internal computation
+`define SAMPLE_WIDTH 24             // Width of samples when sent to DAC
+`define FIXED_POINT 8               // Fixed decimal precision for internal computation
 // Convert and round a fixed precision decimal to a sample width int
 `define FIXED_POINT_TO_SAMPLE_WIDTH(val) ((signed'(val + val[`FIXED_POINT-1])) >>> `FIXED_POINT)
 `define REAL_TO_FIXED_POINT(val) int'(val * (1 <<< `FIXED_POINT))
-`define SF 2.0**-`FIXED_POINT
+`define SF (1 <<< `FIXED_POINT)     // Scaling Factor
 
-`ifndef MAX_FILTER_FIFO_LENGTH
 // Maximum length of variable fifos in filters, will affect their space consumption.
 // A length of 1440 with sample rate as clock gives a delay of 30 ms
+`ifndef MAX_FILTER_FIFO_LENGTH
 `define MAX_FILTER_FIFO_LENGTH 1024 * 8
 `endif
