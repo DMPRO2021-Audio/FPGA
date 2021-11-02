@@ -46,3 +46,4 @@ set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 ### Synthesis and implementation ###
 
 set ARTYA735T "xc7a35ticsg324-1L"
+set_param general.maxThreads 12
