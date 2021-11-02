@@ -47,8 +47,9 @@ in -+-[add]--[delay(tau)]-+-[mul(1-g^2)]--[add]-- out
 `define NTAU  `NFILT            // Total number of tau values (generally same as n filters)
 `define NGAIN  `NFILT + 1       // Total number of gain values (generally n filters + 1)
 module reverberator_core #(
-    parameter WIDTH = 24,        // Integer width
-    parameter MAXDELAY = `MAX_FILTER_FIFO_LENGTH
+    parameter WIDTH    = 24,    // Integer width
+    parameter MAXDELAY = `MAX_FILTER_FIFO_LENGTH,
+    parameter CLK_FRQ  = `CLK_FRQ
 ) (
     // clk: system clock
     // enable: ignored
@@ -60,12 +61,13 @@ module reverberator_core #(
     input logic signed [WIDTH+`FIXED_POINT-1:0] gain[`NGAIN], // Array of g gain values
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
-    input logic signed [WIDTH+`FIXED_POINT-1:0] out
+    output logic signed[WIDTH+`FIXED_POINT-1:0] out
 );
     localparam WORD = WIDTH + `FIXED_POINT;
     logic signed [WORD-1:0] comb_out[`NCOMB] = '{default:0};
     logic signed [WORD-1:0] allp_out[`NALLP] = '{default:0};
     logic signed [WORD-1:0] comb_add;
+    logic signed [WORD-1:0] gain7;
     logic signed [WORD-1:0] out_reg = 0;
     logic signed [WORD-1:0] in_reg = 0;
 
@@ -74,7 +76,7 @@ module reverberator_core #(
     localparam sf = 2.0**-`FIXED_POINT;
 
     clk_downscale #(
-        .FREQ_IN  (`CLK_FRQ  ),
+        .FREQ_IN  (CLK_FRQ  ),
         .FREQ_OUT (`SAMPLE_RATE )
     )
     u_clk_downscale(
@@ -131,16 +133,15 @@ module reverberator_core #(
     assign out = out_reg;
 
     always_ff @( posedge sample_clk ) begin
-        out_reg <= in - gain[`NFILT] * allp_out[1];
+        out_reg <= in + (gain[`NFILT] * allp_out[1]) >>> `FIXED_POINT;
 
-        $display("\nout = %f (%d : 0x%x), out_reg = %f (%d : 0x%x), allp_out[1] = %f, in = %f, comb_add = %f, gain[6] = %f, \
-            gain[`NFILT] * allp_out[1] = %f\ntau[] = {%d, %d, %d, %d, %d, %d}",
-            $itor(out*`SF), `FIXED_POINT_TO_SAMPLE_WIDTH(out), out, 
-            $itor(out_reg*`SF), `FIXED_POINT_TO_SAMPLE_WIDTH(out_reg), out_reg,
-            $itor((in - gain[`NFILT] * allp_out[1])*`SF), $itor(allp_out[1]*sf), $itor(in*sf),
-            $itor(comb_add*sf), $itor(gain[6]*sf), $itor(gain[`NFILT] * allp_out[1] * `SF), tau[0], 
-            tau[1], tau[2], tau[3], tau[4], tau[5]
-        );
+        // $display("\nout = %f (%d : 0x%x), allp_out[1] = %f, in = %f, comb_add = %f, gain[6] = %f, \
+        //     gain[`NFILT] * allp_out[1] = %f\ntau[] = {%d, %d, %d, %d, %d, %d}",
+        //     $itor(out_reg*`SF), `FIXED_POINT_TO_SAMPLE_WIDTH(out_reg), out_reg,
+        //     $itor(allp_out[1]*sf), $itor(in*sf),
+        //     $itor(comb_add*sf), $itor(gain7*`SF), $itor(((gain[`NFILT] * allp_out[1]) >>> `FIXED_POINT) * `SF), 
+        //     tau[0], tau[1], tau[2], tau[3], tau[4], tau[5]
+        // );
     end
 
     always_ff @(posedge write) begin
@@ -149,6 +150,7 @@ module reverberator_core #(
             assert (1'b1 <<< `FIXED_POINT >= gain[i]) 
             else   $error("Reverberator gain should be =< 1 but was gain[%d] = %f", i, $itor(gain[i]*sf));
         end
+        gain7 <= gain[6];
     end
 
 endmodule

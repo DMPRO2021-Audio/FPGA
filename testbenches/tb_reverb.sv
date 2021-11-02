@@ -1,4 +1,4 @@
-`timescale 1ns / 10ps
+`timescale 10us / 1us
 
 `include "constants.svh"
 
@@ -23,15 +23,16 @@ module tb_reverb;
 
     synth_t synth;
 
-    always #10.4 clk = ~clk;
-    clk_downscale #(
-    .FREQ_IN  (`CLK_FRQ  ),
-    .FREQ_OUT (`SAMPLE_RATE )
-    )
-    u_clk_downscale(
-    	.clk_in  (clk  ),
-        .clk_out (sample_clk )
-    );
+    always #1 clk = ~clk;
+    assign sample_clk = clk;
+    // clk_downscale #(
+    // .FREQ_IN  (  ),
+    // .FREQ_OUT (`SAMPLE_RATE )
+    // )
+    // u_clk_downscale(
+    // 	.clk_in  (clk  ),
+    //     .clk_out (sample_clk )
+    // );
 
     generate;
         genvar i;
@@ -62,27 +63,24 @@ module tb_reverb;
     assign reverb_in = mixer_out;
 
     logic write_reverb = 0;
+    // "Larg hall"
     logic signed [31:0] tau[6] = {
-        1960,
-        1440,
-        1280,
-        1200,
-        100,
-        80
+        3003, 3403, 3905, 4495, 241, 83
     };
     logic signed [31:0] gain[7] = {
-        `REAL_TO_FIXED_POINT(0.945),
-        `REAL_TO_FIXED_POINT(0.996),
-        `REAL_TO_FIXED_POINT(0.959),
-        `REAL_TO_FIXED_POINT(0.964),
-        `REAL_TO_FIXED_POINT(0.966),
+        `REAL_TO_FIXED_POINT(0.895),
+        `REAL_TO_FIXED_POINT(0.883),
+        `REAL_TO_FIXED_POINT(0.867),
+        `REAL_TO_FIXED_POINT(0.853),
         `REAL_TO_FIXED_POINT(0.7),
-        `REAL_TO_FIXED_POINT(0.7)
+        `REAL_TO_FIXED_POINT(0.7),
+        `REAL_TO_FIXED_POINT(0.5)
     };
 
     reverberator_core #(
         .WIDTH     (24     ),
-        .MAXDELAY (`MAX_FILTER_FIFO_LENGTH )
+        .MAXDELAY  (`MAX_FILTER_FIFO_LENGTH ),
+        .CLK_FRQ   (`SAMPLE_RATE)
     )
     u_reverberator_core(
     	.clk    (clk    ),
@@ -112,7 +110,7 @@ module tb_reverb;
 
         for(int i = 0; i < `N_OSCILLATORS; i++) begin
 
-            synth.wave_gens[i].shape = SAWTOOTH;
+            synth.wave_gens[i].shape = PIANO;
             synth.wave_gens[i].freq = 0;
 
             synth.wave_gens[i].envelopes[0].duration = 3000;
@@ -146,11 +144,11 @@ module tb_reverb;
         $strobe("[tb_reverb] Playing %d", synth.wave_gens[1].freq);
         $strobe("[tb_reverb] Playing %d", synth.wave_gens[2].freq);
 
-        #100;
+        #10;
 
         fd = $fopen("./test_output/oscillator-reverb.txt", "w+");
 
-        #1500000000;
+        #150000;
 
         // Disable 0-2
         synth.wave_gens[0].cmds <= 8'b0;
@@ -163,7 +161,7 @@ module tb_reverb;
         synth.wave_gens[4].cmds <= 8'b11;
         synth.wave_gens[5].cmds <= 8'b11;
 
-        #200000000;
+        #2000;
 
         // Enable oscillators 3-5
         synth.wave_gens[3].cmds <= 8'b10;
@@ -179,7 +177,7 @@ module tb_reverb;
         $strobe("Playing %d", synth.wave_gens[4].freq);
         $strobe("Playing %d", synth.wave_gens[5].freq);
 
-        #2000000000;
+        #100000;
 
         // Disable oscillators 3-5
         synth.wave_gens[3].cmds <= 8'b0;
@@ -191,7 +189,7 @@ module tb_reverb;
         synth.wave_gens[7].cmds <= 8'b11;
         synth.wave_gens[8].cmds <= 8'b11;
 
-        #200000000;
+        #2000;
         
         // Enable oscillators 6-8
         synth.wave_gens[6].cmds <= 8'b10;
@@ -207,37 +205,39 @@ module tb_reverb;
         $strobe("Playing %d", synth.wave_gens[7].freq);
         $strobe("Playing %d", synth.wave_gens[8].freq);
 
-        #2000000000;
+        #100000;
 
-        // // Disable 6-8
-        // synth.wave_gens[6].cmds <= 8'b0;
-        // synth.wave_gens[7].cmds <= 8'b0;
-        // synth.wave_gens[8].cmds <= 8'b0;
+        // Disable 6-8
+        synth.wave_gens[6].cmds <= 8'b0;
+        synth.wave_gens[7].cmds <= 8'b0;
+        synth.wave_gens[8].cmds <= 8'b0;
 
-        // // Enable and reset 9
-        // synth.wave_gens[9].cmds <= 8'b11;
+        #100000;
 
-        // #20;
+        // Enable and reset 9
+        synth.wave_gens[9].cmds <= 8'b11;
+
+        #20;
         
-        // // Enable 9
-        // synth.wave_gens[9].cmds <= 8'b10;
+        // Enable 9
+        synth.wave_gens[9].cmds <= 8'b10;
 
-        // // Set frequency of 9
-        // synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207.65);
+        // Set frequency of 9
+        synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207.65);
         
-        // #1500000;
+        #1500000;
 
-        // // Enable and reset 9
-        // synth.wave_gens[9].cmds <= 8'b11;
-        // #20;
+        // Enable and reset 9
+        synth.wave_gens[9].cmds <= 8'b11;
+        #20;
 
-        // // Enable 9
-        // synth.wave_gens[9].cmds <= 8'b10;
+        // Enable 9
+        synth.wave_gens[9].cmds <= 8'b10;
 
-        // // Set frequency of 9
-        // synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207);
+        // Set frequency of 9
+        synth.wave_gens[9].freq <= `REAL_TO_FIXED_POINT(207);
 
-        // #1500000;
+        #1500000;
         $fclose(fd);
         $finish;
     end

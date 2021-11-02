@@ -46,7 +46,7 @@ module comb_filter #(
     );
 
     assign out = out_node;
-    assign adder = in + g * out_node;
+    assign adder = in + (g * out_node) >>> `FIXED_POINT;
 
     // always_ff @( posedge sample_clk ) begin
     //     counter <= counter + 1;

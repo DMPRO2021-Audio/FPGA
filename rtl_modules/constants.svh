@@ -35,6 +35,6 @@
 
 `ifndef MAX_FILTER_FIFO_LENGTH
 // Maximum length of variable fifos in filters, will affect their space consumption.
-// A length of 144 with sample rate as clock gives a delay of 30 ms
+// A length of 1440 with sample rate as clock gives a delay of 30 ms
 `define MAX_FILTER_FIFO_LENGTH 1024 * 8
 `endif
