@@ -5,8 +5,23 @@ import matplotlib.pyplot as plt
 SAMPLE_RATE = 48000
 SAMPLE_PERIOD = 1 / SAMPLE_RATE
 
-tau = [1440, 1600, 1760, 1920, 240, 80]
-gain = [0.902, 0.891, 0.882, 0.871, 0.7, 0.7, 0.3]
+tau =  [1463 , 1597 , 1836 , 2123 , 249, 143]
+gain = [0.902, 0.891, 0.882, 0.871, 0.7, 0.7, 0.5]
+
+# tau = t * SAMPLE_RATE
+# gains 1-4 = 10 ^ (-3 * tn / T)
+
+# # Reverb for "large room"
+# #      30ms   35ms  40ms  45ms  5ms  1.7ms
+# tau = [1441 , 1683, 1921, 2159, 241, 83]
+# # T = 2000ms
+# gain =[0.899, 0.886, 0.871, 0.856, 0.7, 0.7, 0.5]
+
+# Reverb for "hall"
+#      62.5ms 70.9ms 81.3ms 93.75ms 5ms 1.7ms
+tau = [3003, 3403, 3905, 4495, 241, 83]
+# T = 4000ms
+gain =[0.895, 0.883, 0.867, 0.853, 0.7, 0.7, 0.5]
 
 print(f"Sample rate = {SAMPLE_RATE}Hz (period = {SAMPLE_PERIOD*1000:.2f}ms)")
 print("tau values: ", end='')
@@ -41,7 +56,7 @@ combs = list([CombFilter(tau[i], gain[i]) for i in range(4)])
 allp0 = AllpassFilter(tau[4], gain[4])
 allp1 = AllpassFilter(tau[5], gain[5])
 
-sig = np.concatenate((np.genfromtxt("./test_output/oscillator-mixer.txt", delimiter=",", unpack=True), np.zeros(SAMPLE_RATE*5)))
+sig = np.concatenate((np.genfromtxt("./test_output/oscillator-mixer.txt", delimiter=",", unpack=True), np.zeros(SAMPLE_RATE*2)))
 y = []
 
 for sigin in sig:
