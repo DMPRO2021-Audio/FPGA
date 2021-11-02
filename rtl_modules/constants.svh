@@ -16,6 +16,14 @@
 `define SAMPLE_RATE 48000
 `endif
 
+`ifndef MIN_FREQUENCY
+`define MIN_FREQUENCY 16
+`endif
+
+`ifndef MAX_SAMPLES_PER_PERIOD
+`define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
+`endif
+
 `ifndef SPI_WIDTH
 `define SPI_WIDTH 8
 `endif

@@ -23,6 +23,7 @@ read_verilog -sv [glob $source_dir/constants.svh]
 read_verilog -sv [glob $source_dir/control_unit.sv]
 read_verilog -sv [glob $source_dir/oscillator.sv]
 read_verilog -sv [glob $source_dir/mixer.sv]
+read_verilog -sv [glob $source_dir/pan.sv]
 
 # Use this when using 48MHz clock
 #read_verilog [glob $source_dir/clk_wiz/clk_wiz.v]  

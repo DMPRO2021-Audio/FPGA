@@ -2,9 +2,7 @@
 
 `include "constants.svh"
 
-`define MIN_FREQUENCY 16
 `define MAX_AMPLITUDE ((1 << (WIDTH + `FIXED_POINT)) - 1)
-`define MAX_SAMPLES_PER_PERIOD `SAMPLE_RATE / `MIN_FREQUENCY
 
 import shape_pkg::*;
 import protocol_pkg::*;

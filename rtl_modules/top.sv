@@ -107,6 +107,17 @@ module top(
     logic [31:0] volume;
     logic [31:0] reverb;
 
+    // Enable panning by holding btn3 or btn2 and pressing btn1
+    logic signed [31:0] lr_weight = `REAL_TO_FIXED_POINT(0);
+    always_ff @(posedge btn[1]) begin
+        if(btn[3] && lr_weight > `REAL_TO_FIXED_POINT(-1.0)) begin
+            lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(-0.1);
+        end else if(btn[2] && lr_weight < `REAL_TO_FIXED_POINT(1.0)) begin
+            lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(0.1);
+        end
+    end
+    
+
     wavegen_t wave_gens[2];
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] wave;
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [2];
@@ -117,7 +128,7 @@ module top(
         integer i;
 
         for(i = 0; i < 2; i++) begin
-            wave_gens[i].velocity = 1000000;
+            wave_gens[i].velocity = 500000;
             wave_gens[i].shape = PIANO;
             wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
 
@@ -245,11 +256,22 @@ module top(
         .out(wave)
     );
 
-    dac_transmitter #(.WIDTH(24)) transmitter0(
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT-1: 0] left;
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT-1: 0] right;
+
+    pan #(.WIDTH(24)) pan(
+        .clk(sample_clk),
+        .in(wave),
+        .lr_weight(lr_weight),
+        .left(left),
+        .right(right)
+    );
+
+    dac_transmitter #(.WIDTH(`SAMPLE_WIDTH)) transmitter0(
         .clk(dac_bit_clk),
         .enable(locked),
-        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(wave)),
-        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(wave)),
+        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(left)),
+        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(right)),
 
         .sclk(sclk),   // Serial data clock
         .lrclk(lrclk),  // Left right channel select

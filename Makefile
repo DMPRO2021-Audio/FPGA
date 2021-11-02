@@ -78,6 +78,10 @@ $(TS)tb_mixer: $(TB)/tb_mixer.sv $(TS)mixer $(TS)oscillator $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
+$(TS)tb_pan: $(TB)/tb_pan.sv $(TS)pan $(COMMON_DEPS)
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	touch $@ 
+
 
 ### Module testbenches ###
 
@@ -120,6 +124,11 @@ tb_oscillator: $(TS)tb_oscillator
 	-mkdir -p test_output
 	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
+
+tb_pan: $(TS)tb_pan
+	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
+	xsim $@_sim -R -nolog 
+
 
 ### Module targets ###
 
@@ -180,6 +189,10 @@ $(TS)structures_pkg: $(SRC)/structures_pkg.sv
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog 
 	@touch $@
 
+$(TS)pan: $(SRC)/pan.sv
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog 
+	@touch $@
+
 ## All modules and their respective compilation unit ##
 oscillator: $(TS)oscillator
 structures_pkg: $(TS)structures_pkg
@@ -192,6 +205,7 @@ fifo_var_delay: $(TS)fifo_delay
 comb_filter: $(TS)comb_filter
 allpass_filter: $(TS)allpass_filter
 reverberator_core: $(TS)reverberator_core
+pan: $(TS)pan
 
 ## Top module ##
 
@@ -202,7 +216,8 @@ TOP_DEPS = \
 	sipo_shift_register \
 	fifo_delay \
 	oscillator \
-	dac_transmitter
+	dac_transmitter \
+	pan
 
 $(TS)top: $(SRC)/top.sv $(TOP_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $(SV_DEFINES) $< -nolog
