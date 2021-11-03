@@ -18,12 +18,12 @@ module top(
     input logic spi_cs,
     input logic spi_clk,
 
-    input logic dac_data,           // jb[2]
-    input logic dac_sys_clk,        // jb[0]
-    input logic dac_lr_clk,         // jb[3]
-    input logic dac_bit_clk,        // jb[1]
+    output logic dac_data,           // jb[2]
+    output logic dac_sys_clk,        // jb[0]
+    output logic dac_lr_clk,         // jb[3]
+    output logic dac_bit_clk,        // jb[1]
 
-    input logic [0:7] gpio
+    input logic [7:0] gpio
 
 `ifdef DEVKIT                       // Ports exclusive to devkit
     ,
@@ -116,6 +116,12 @@ module top(
     initial sample_clk <= 0;
     initial sclk <= 0;
 
+    /* Setup global synth varables */
+    initial begin
+        synth.pan.balance = `REAL_TO_FIXED_POINT(0);
+        synth.master_volume = `REAL_TO_FIXED_POINT(1);
+    end
+
     /* Initialize oscillators */
     initial begin
         integer i;
@@ -123,7 +129,8 @@ module top(
         for(i = 0; i < `N_OSCILLATORS; i++) begin
             synth.wave_gens[i].velocity = 500000;
             synth.wave_gens[i].shape = PIANO;
-            synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
+            synth.wave_gens[i].freq = n[12 + i*2];
+            synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 0 << `WAVEGEN_ENABLE_BIT;
 
             synth.wave_gens[i].envelopes[0].gain = `REAL_TO_FIXED_POINT(0);
             synth.wave_gens[i].envelopes[0].duration = 1200;
@@ -205,7 +212,7 @@ module top(
 
 `ifndef DEBUG
     /* Create correct clock on dev board */
-    clk_wiz_dev clk_wiz (
+    clk_wiz clk_wiz (
         .clk_in(MASTER_CLK),
         .reset(0),
         .clk_out(sys_clk),
@@ -297,6 +304,7 @@ module top(
         .clk(sample_clk),
         .in(mixer_out),
         .lr_weight(synth.pan.balance),
+
         .left(left),
         .right(right)
     );
@@ -358,20 +366,15 @@ module top(
         end
     endgenerate
     always_ff @(posedge sys_clk) begin
-        num_enabled[$clog(`N_OSCILLATORS):0] <= num_enabled_count[`N_OSCILLATORS-1];
+        num_enabled <= num_enabled_count[`N_OSCILLATORS-1];
     end
-
-    initial begin
-        synth.wave_gens[0] <= n[12];
-        synth.wave_gens[1] <= n[14];
-        synth.wave_gens[2] <= n[16];
-    end
+    
     logic [2:0] btn_pressed;
     always_ff @(posedge sys_clk) begin
         for (integer j = 0; j < 3; j++) begin
             if (gpio[j] == 1) begin
                 synth.wave_gens[j].cmds[`WAVEGEN_ENABLE_BIT] <= 1;
-                synth.wave_gens[j].cmds[`ENVELOPE_RESET_BIT] <= ~btn_pressed[0];
+                synth.wave_gens[j].cmds[`ENVELOPE_RESET_BIT] <= ~btn_pressed[j];
                 btn_pressed[j] <= 1;
             end
             else begin
@@ -381,6 +384,5 @@ module top(
         end // endfor
     
     end
-
 
 endmodule

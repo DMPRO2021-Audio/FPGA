@@ -38,6 +38,7 @@ add_files [glob $source_dir/../lookup_tables/*]
 
 # Board constaints file
 read_xdc $constr_dir/Custom-PCB.xdc
+#read_xdc $constr_dir/Arty-A7-35-Master.xdc
 
 # Other constraints
 set_property SEVERITY {Warning} [get_drc_checks NSTD-1]

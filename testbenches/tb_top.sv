@@ -10,42 +10,73 @@ module tb_top;
 
 bit clk = 0;
 always #5 clk = ~clk;
-logic [3:0] led;
 
 bit mosi;
 bit sclk = 0;
 bit miso;
 bit csel = 1;
 
-logic [3:0] jb;
+logic dac_data;
+logic dac_sys_clk;
+logic dac_lr_clk;
+logic dac_bit_clk;
 
+logic signed [`SAMPLE_WIDTH-1:0] left = 0;
+logic signed [`SAMPLE_WIDTH-1:0] right = 0;
+
+logic [7:0] gpio;
 
 top dut(
-    .CLK100MHZ (clk ),
-    .ck_mosi   (mosi   ),
-    .ck_sck    (sclk    ),
-    .ck_ss     (csel     ),
-    .ck_miso   (miso   ),
-    .btn       (0       ),
-    .led       (led       ),
-    .led_r     (     ),
-    .led_g     (     ),
-    .led_b     (     ),
-    .jb        (jb        )
+    .MASTER_CLK (clk ),
+    .spi_mosi   (mosi),
+    .spi_miso   (miso),
+    .spi_cs     (csel),
+    .spi_clk    (sclk),
+    .gpio       (gpio),
+    .dac_data   (dac_data),
+    .dac_sys_clk(dac_sys_clk),
+    .dac_lr_clk (dac_lr_clk),
+    .dac_bit_clk(dac_bit_clk)
 );
 
-int sclk_cnt = 0;
-always_ff @(posedge jb[1]) begin
-    if (jb[3] == 1) begin
-        sclk_cnt ++;
-        
+// Read the I2S data
+always_ff @(posedge dac_bit_clk) begin
+    if(dac_lr_clk == 1) begin
+        left <= (left <<< 1) | dac_data;
+    end else begin
+        right <= (right <<< 1) | dac_data;
     end
-    $display("[tb_top] sd = %d, lrclk = %d counter = %d", jb[2], jb[3], sclk_cnt);
+end
+
+// Write the left output to a file
+integer fd;
+always_ff @(negedge dac_lr_clk) begin
+    if(fd != -1) begin
+        $fwrite(fd, "%d\n", left);
+    end
 end
 
 initial begin
     $display("[tb_top] Testbench start");
-    #1000000 $finish;
+
+    
+    // Add some delay to account for the time it takes for a sample to pass through all stages
+    #10000;
+
+    fd = $fopen("./test_output/oscillator.txt", "w+");
+
+    gpio[0] = 1'b1;
+    #100000000;    
+    gpio[0] = 1'b0;
+    gpio[1] = 1'b1;
+    #100000000;    
+    gpio[1] = 1'b0;
+    gpio[2] = 1'b1;
+    #100000000;    
+    gpio[2] = 1'b0;
+    $fclose(fd);
+    
+    $finish;
 end
 
 // top dut

@@ -26,7 +26,8 @@ module dac_transmitter
     reg [WIDTH-1:0] right_shift_reg;
     reg lrclk_reg; 
 
-    initial bit_counter = 0;
+    // Start the bit counter at the loading step
+    initial bit_counter = 2 * WIDTH - 1;
     initial lrclk_reg = 1;
 
     assign lrclk = lrclk_reg;
@@ -34,7 +35,6 @@ module dac_transmitter
 
     always @(negedge(clk)) begin
         if(enable) begin
-
             bit_counter <= bit_counter + 1;
 
             if(bit_counter < WIDTH) begin

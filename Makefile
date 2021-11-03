@@ -205,6 +205,7 @@ fifo_var_delay: $(TS)fifo_delay
 comb_filter: $(TS)comb_filter
 allpass_filter: $(TS)allpass_filter
 reverberator_core: $(TS)reverberator_core
+mixer: $(TS)mixer
 pan: $(TS)pan
 
 ## Top module ##
@@ -217,6 +218,7 @@ TOP_DEPS = \
 	fifo_delay \
 	oscillator \
 	dac_transmitter \
+	mixer \
 	pan
 
 $(TS)top: $(SRC)/top.sv $(TOP_DEPS)
@@ -230,6 +232,7 @@ top: $(TS)top
 
 tb_top: $(TS)tb_top $(TS)top $(TOP_DEPS) $(COMMON_DEPS)
 	-mkdir -p $(LOGS)
+	-mkdir -p $(TEST_OUT)
 	xelab -O$(OPT) $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim --log $(LOGS)/top_xelab.log
 	xsim $@_sim -R --log $(LOGS)/xsim.log -wdb $(BUILD)/$@_waves.wdb $(GUI) --ieeewarnings
 
@@ -293,7 +296,7 @@ help:
 	@echo "FPGA makefile"
 	@echo "========================================================================================"
 	@echo "Usage:"
-	@echo "Initialise outputs:"
+	@echo "Initialise outputs:	   make init"
 	@echo "Synthesise:             make synth"
 	@echo "Flash to FPGA:          make flash"
 	@echo "Build top:              make top"
@@ -318,4 +321,3 @@ purge: clean
 
 plot:
 	python $(SCRIPTS)/plot_oscillator.py
-
