@@ -65,7 +65,7 @@
 
 `timescale 1ps/1ps
 
-module clk_wiz_dev
+module clk_wiz
 
  (// Clock in ports
   // Clock out ports
