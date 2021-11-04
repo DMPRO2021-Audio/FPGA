@@ -4,7 +4,8 @@ Codebase for FPGA part of synthesizer computer project. HDL synthesized and impl
 
 ## Build
 * Add sources in `build.tcl`, using the `read_verilog` keyword.
-* Makefile contains the full command to start Vivado and run build script, run `make [all]`.
+* Makefile contains the full command to start Vivado and run build script, run `make synth`.
+* More information by running `make help`.
 * Makefile also makes a separate build, much faster for debugging, simulation and quick testing.
 * `make vivado` to open Vivado with environment setup.
 
@@ -12,7 +13,7 @@ Codebase for FPGA part of synthesizer computer project. HDL synthesized and impl
 See `open_wave_config` and `open_wave_database` un user guide (UG835) on how to open waveforms created with `-wdb` flag.
 
 ## Program
-* After building and successfully generating bitstream, connect board and run `make program`.
+* After building and successfully generating bitstream, connect board and run `make flash`.
 * Makefile contains the full command to start Vivado and run `program.tcl`.
 
 ## Resources
