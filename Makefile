@@ -173,7 +173,7 @@ $(TS)oscillator: $(SRC)/oscillator.sv wave_rom $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv $(TS)clk_downscale comb_filter allpass_filter
+$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv $(TS)clk_downscale $(TS)comb_filter $(TS)allpass_filter
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -197,6 +197,10 @@ $(TS)wave_rom: $(SRC)/memory/wave_rom.v
 	xvlog $(INCLUDES) $(WORKLIB) $< -nolog 
 	@touch $@
 
+$(TS)rom_arbiter: $(SRC)/memory/rom_arbiter.sv $(TS)wave_rom
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog 
+	@touch $@
+
 ## All modules and their respective compilation unit ##
 oscillator: $(TS)oscillator
 structures_pkg: $(TS)structures_pkg
@@ -212,6 +216,7 @@ reverberator_core: $(TS)reverberator_core
 mixer: $(TS)mixer
 pan: $(TS)pan
 wave_rom: $(TS)wave_rom
+rom_arbiter: $(TS)rom_arbiter
 
 ## Top module ##
 
@@ -225,6 +230,7 @@ TOP_DEPS = \
 	dac_transmitter \
 	mixer \
 	reverberator_core \
+	rom_arbiter \
 	pan
 
 $(TS)top: $(SRC)/top.sv $(TOP_DEPS)

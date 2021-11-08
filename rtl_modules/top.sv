@@ -244,8 +244,21 @@ module top(
 
     /* Oscillators - Wave generation start */
 
-    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
+    logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES) - 1:0] rom_addresses [`N_OSCILLATORS];
+    logic [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data [`N_OSCILLATORS];
 
+    rom_arbiter #(
+        .ADDR_WIDTH($clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)),
+        .DATA_WIDTH(`SAMPLE_WIDTH + `FIXED_POINT),
+        .N_WAVEGENS(`N_OSCILLATORS)
+    )
+    rom_arbiter(
+       .sys_clk(sys_clk),
+       .addresses(rom_addresses),
+       .out_data(rom_data)
+    );
+
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
     generate;
         genvar i;
 
@@ -258,6 +271,9 @@ module top(
                 .envelopes(synth.wave_gens[i].envelopes),
                 .amplitude(24'(synth.wave_gens[i].velocity)),
                 .shape(synth.wave_gens[i].shape),
+                .rom_data(rom_data[i]),
+
+                .rom_addr(rom_addresses[i]),
                 .out(waves[i])
             );
         end

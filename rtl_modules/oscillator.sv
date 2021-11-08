@@ -19,7 +19,9 @@ module oscillator
     input envelope_t [0:`ENVELOPE_LEN-1] envelopes,
     input logic [WIDTH-1:0] amplitude,
     input wave_shape shape,
+    input logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data,
 
+    output logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)-1:0] rom_addr,
     output logic signed [WIDTH + `FIXED_POINT - 1:0] out
 );
 
@@ -30,18 +32,6 @@ module oscillator
     
     logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val = 0;
     assign out = (out_val * amplitude * envelope_gain) >>> ((WIDTH-1) + `FIXED_POINT); //The bitshift is dividing by the max amplitude
-
-    logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)-1:0] rom_addr;
-    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data;
-    
-    // This ROM contains the sample values at the maximum amplitude
-    // to maintain as much detail as possible in the sample
-    wave_rom wave_rom(
-        .clk(clk),
-        .en(enable),
-        .addr(rom_addr),
-        .data(rom_data)
-    );
 
     always_ff @ (posedge(clk)) begin
 
@@ -95,7 +85,8 @@ module oscillator
 
         end else begin
             out_val <= 0;
-            sample_index <= 0; 
+            sample_index <= 0;
+            rom_addr <= 0;
         end
     end
 endmodule
