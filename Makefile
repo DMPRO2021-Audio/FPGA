@@ -41,6 +41,10 @@ ifdef GUI
 	GUI=-gui -view $(BUILD)/$@_waves.wcfg
 endif
 
+ifdef DEVKIT
+	ON_DEVKIT=1
+endif
+
 all: synth
 
 
@@ -54,7 +58,7 @@ $(TS)tb_fifovd: $(TB)/tb_fifovd.sv $(TS)fifo_delay
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
-$(TS)tb_clk_downscale: $(TB)/tb_clk_downscale.sv $(TS)clk_downscale
+$(TS)tb_comb_filter: $(TB)/tb_comb_filter.sv $(TS)comb_filter
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
@@ -83,17 +87,13 @@ $(TS)tb_pan: $(TB)/tb_pan.sv $(TS)pan $(COMMON_DEPS)
 	touch $@ 
 
 
-### Module testbenches ###
+### Module testbenches ### 
 
-tb_fifo: $(TS)tb_fifo $(TS)fifo_delay
+tb_fifovd: $(TS)tb_fifovd $(TS)fifo_delay_bram
 	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
-tb_fifovd: $(TS)tb_fifovd $(TS)fifo_delay
-	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
-	xsim $(WORKLIB_XELAB) $@_sim -R -nolog 
-
-tb_clk_downscale: $(TS)tb_clk_downscale
+tb_comb_filter: $(TS)tb_comb_filter
 	xelab $(WORKLIB_XELAB) -debug typical $(WORKLIB_NAME).$@ -s $@_sim -nolog
 	xsim $@_sim -R -nolog 
 
@@ -137,7 +137,7 @@ tb_pan: $(TS)tb_pan
 
 ## Modules ##
 
-$(TS)allpass_filter: $(SRC)/filters/allpass_filter.sv fifo_var_delay
+$(TS)allpass_filter: $(SRC)/filters/allpass_filter.sv $(TS)fifo_delay_bram
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -149,7 +149,7 @@ $(TS)clk_downscale: $(SRC)/clk_downscale.sv
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)comb_filter: $(SRC)/filters/comb_filter.sv fifo_var_delay
+$(TS)comb_filter: $(SRC)/filters/comb_filter.sv $(TS)fifo_delay_bram
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -161,7 +161,11 @@ $(TS)dac_transmitter: $(SRC)/dac_transmitter.v $(COMMON_DEPS)
 	xvlog $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)fifo_delay: $(SRC)/fifo_delay.sv
+$(TS)fifo_delay: $(SRC)/fifo_delay/fifo_delay.sv
+	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
+	@touch $@
+
+$(TS)fifo_delay_bram: $(SRC)/fifo_delay/fifo_delay_bram.sv $(TS)bram
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -173,7 +177,7 @@ $(TS)oscillator: $(SRC)/oscillator.sv $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv $(TS)clk_downscale comb_filter allpass_filter
+$(TS)reverberator_core: $(SRC)/filters/reverberator_core.sv $(TS)comb_filter $(TS)allpass_filter
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -186,11 +190,16 @@ $(TS)spi_slave: $(SRC)/spi_slave.sv $(TS)sipo_shift_register $(COMMON_DEPS)
 	@touch $@
 
 $(TS)structures_pkg: $(SRC)/structures_pkg.sv
+	@echo "make structures!"
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog 
 	@touch $@
 
 $(TS)pan: $(SRC)/pan.sv
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog 
+	@touch $@
+
+$(TS)bram: $(SRC)/memory/bram.v
+	xvlog $(INCLUDES) $(WORKLIB) $< -nolog 
 	@touch $@
 
 ## All modules and their respective compilation unit ##
@@ -202,11 +211,13 @@ spi_slave: $(TS)spi_slave
 control_unit: $(TS)control_unit
 fifo_delay: $(TS)fifo_delay
 fifo_var_delay: $(TS)fifo_delay
+fifo_var_delay_bram: $(TS)fifo_delay $(TS)bram
 comb_filter: $(TS)comb_filter
 allpass_filter: $(TS)allpass_filter
 reverberator_core: $(TS)reverberator_core
 mixer: $(TS)mixer
 pan: $(TS)pan
+bram: $(TS)bram
 
 ## Top module ##
 
@@ -248,7 +259,8 @@ TCL_ARGS = \
 	$(CONSTR_DIR) \
 	$(SYNTH_DIR) \
 	$(BUILD_DIR) \
-	$(SYNTH_ONLY)
+	$(SYNTH_ONLY) \
+	$(ON_DEVKIT)
 
 # Synthesise and generate bistream
 synth:
