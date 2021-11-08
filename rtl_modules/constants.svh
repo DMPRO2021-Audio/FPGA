@@ -5,7 +5,7 @@
 `endif
 
 `ifndef N_OSCILLATORS
-`define N_OSCILLATORS 16
+`define N_OSCILLATORS 4
 `endif
 
 `ifndef ENVELOPE_LEN
@@ -30,12 +30,12 @@
 
 `define ENVELOPE_RESET_BIT 0
 `define WAVEGEN_ENABLE_BIT 1
-`define CMD_BITS
 
+`define N_WAVETABLES 2
 `define SAMPLE_WIDTH 24             // Width of samples when sent to DAC
 `define FIXED_POINT 8               // Fixed decimal precision for internal computation
 // Convert and round a fixed precision decimal to a sample width int
-`define FIXED_POINT_TO_SAMPLE_WIDTH(val) ((signed'(val + val[`FIXED_POINT-1])) >>> `FIXED_POINT)
+`define FIXED_POINT_TO_SAMPLE_WIDTH(val) (`SAMPLE_WIDTH'((signed'(val + val[`FIXED_POINT-1])) >>> `FIXED_POINT))
 `define REAL_TO_FIXED_POINT(val) int'(val * (1 <<< `FIXED_POINT))
 `define SF (1 <<< `FIXED_POINT)     // Scaling Factor
 

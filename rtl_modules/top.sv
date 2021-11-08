@@ -14,7 +14,7 @@ module top(
     input logic MASTER_CLK,
 
     input logic spi_mosi,
-    input logic spi_miso,
+    output logic spi_miso,
     input logic spi_cs,
     input logic spi_clk,
 
@@ -30,7 +30,11 @@ module top(
     /* Declare variables */
 
     /* Note values C3 to B5 */
+<<<<<<< HEAD
     integer n[62];
+=======
+    integer n[55];
+>>>>>>> a311b2328b9d1c65df9e6136afed07a8034073b4
     initial n = '{
         `REAL_TO_FIXED_POINT(65.406),   // C2       0
         `REAL_TO_FIXED_POINT(69.296),   // C#/Db2
@@ -90,6 +94,7 @@ module top(
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
+<<<<<<< HEAD
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
@@ -97,6 +102,8 @@ module top(
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
+=======
+>>>>>>> a311b2328b9d1c65df9e6136afed07a8034073b4
         `REAL_TO_FIXED_POINT(0.00000)   //
     };
 
@@ -160,7 +167,7 @@ module top(
         synth.wave_gens[2].velocity = 600000;
     end
 
-`ifdef NO_MCU
+//`ifdef NO_MCU
     /* Sample tunes */
 
     // /* Start 'Tilbake til Normalen' monotonic */
@@ -242,10 +249,6 @@ module top(
 // `endif
 
     logic locked;
-
-    // Placeholders for unused signals
-    logic in_placeholder = 1;
-    logic out_placeholder;
 
     /* Instantiate modules */
 
@@ -434,22 +437,5 @@ module top(
     always_ff @(posedge sys_clk) begin
         num_enabled <= num_enabled_count[`N_OSCILLATORS-1];
     end
-
-
-    // logic [2:0] btn_pressed;
-    // always_ff @(posedge sys_clk) begin   
-    //     for (integer j = 0; j < 3; j++) begin
-    //         if (gpio[j] == 1) begin
-    //             synth.wave_gens[j].cmds[`WAVEGEN_ENABLE_BIT] <= 1;
-    //             synth.wave_gens[j].cmds[`ENVELOPE_RESET_BIT] <= ~btn_pressed[j];
-    //             btn_pressed[j] <= 1;
-    //         end
-    //         else begin
-    //             synth.wave_gens[j].cmds[`WAVEGEN_ENABLE_BIT] <= 0;
-    //             btn_pressed[j] <= 0;
-    //         end
-    //     end // endfor
-    
-    // end
 
 endmodule

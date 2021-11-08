@@ -65,15 +65,7 @@ initial begin
 
     fd = $fopen("./test_output/oscillator.txt", "w+");
 
-    gpio[0] = 1'b1;
-    #100000000;    
-    gpio[0] = 1'b0;
-    gpio[1] = 1'b1;
-    #100000000;    
-    gpio[1] = 1'b0;
-    gpio[2] = 1'b1;
-    #100000000;    
-    gpio[2] = 1'b0;
+    #200000000;    
     $fclose(fd);
     
     $finish;

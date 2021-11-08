@@ -70,7 +70,7 @@ $(TS)tb_sipo: $(TB)/tb_sipo.sv sipo_shift_register
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
-$(TS)tb_oscillator: $(TB)/tb_oscillator.sv $(TS)oscillator $(COMMON_DEPS)
+$(TS)tb_oscillator: $(TB)/tb_oscillator.sv $(TS)oscillator $(TS)wave_rom $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	touch $@
 
@@ -173,7 +173,7 @@ $(TS)mixer: $(SRC)/mixer.sv $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
-$(TS)oscillator: $(SRC)/oscillator.sv $(COMMON_DEPS)
+$(TS)oscillator: $(SRC)/oscillator.sv wave_rom $(COMMON_DEPS)
 	xvlog --sv $(INCLUDES) $(WORKLIB) $< -nolog
 	@touch $@
 
@@ -202,6 +202,10 @@ $(TS)bram: $(SRC)/memory/bram.v
 	xvlog $(INCLUDES) $(WORKLIB) $< -nolog 
 	@touch $@
 
+$(TS)wave_rom: $(SRC)/memory/wave_rom.v
+	xvlog $(INCLUDES) $(WORKLIB) $< -nolog 
+	@touch $@
+
 ## All modules and their respective compilation unit ##
 oscillator: $(TS)oscillator
 structures_pkg: $(TS)structures_pkg
@@ -218,6 +222,7 @@ reverberator_core: $(TS)reverberator_core
 mixer: $(TS)mixer
 pan: $(TS)pan
 bram: $(TS)bram
+wave_rom: $(TS)wave_rom
 
 ## Top module ##
 
@@ -230,6 +235,7 @@ TOP_DEPS = \
 	oscillator \
 	dac_transmitter \
 	mixer \
+	reverberator_core \
 	pan
 
 $(TS)top: $(SRC)/top.sv $(TOP_DEPS)
