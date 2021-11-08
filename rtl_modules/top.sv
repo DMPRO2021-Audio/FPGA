@@ -14,7 +14,7 @@ module top(
     input logic MASTER_CLK,
 
     input logic spi_mosi,
-    input logic spi_miso,
+    output logic spi_miso,
     input logic spi_cs,
     input logic spi_clk,
 
@@ -35,7 +35,7 @@ module top(
     /* Declare variables */
 
     /* Note values C3 to B5 */
-    integer n[50];
+    integer n[55];
     initial n = '{
         `REAL_TO_FIXED_POINT(65.406),   // C2       0
         `REAL_TO_FIXED_POINT(69.296),   // C#/Db2
@@ -90,6 +90,11 @@ module top(
         `REAL_TO_FIXED_POINT(987.767),  // B5
 
         `REAL_TO_FIXED_POINT(1046.502), // C6       48
+        `REAL_TO_FIXED_POINT(0.00000),  //
+        `REAL_TO_FIXED_POINT(0.00000),  //
+        `REAL_TO_FIXED_POINT(0.00000),  //
+        `REAL_TO_FIXED_POINT(0.00000),  //
+        `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000)   //
     };
 
@@ -129,7 +134,7 @@ module top(
         for(i = 0; i < `N_OSCILLATORS; i++) begin
             synth.wave_gens[i].velocity = 500000;
             synth.wave_gens[i].shape = PIANO;
-            synth.wave_gens[i].freq = n[12 + i*2];
+            synth.wave_gens[i].freq = 0;
             synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 0 << `WAVEGEN_ENABLE_BIT;
 
             synth.wave_gens[i].envelopes[0].gain = `REAL_TO_FIXED_POINT(0);
@@ -156,9 +161,12 @@ module top(
             synth.wave_gens[i].envelopes[7].gain = `REAL_TO_FIXED_POINT(0);
             synth.wave_gens[i].envelopes[7].duration = 4800;
         end
+
+        synth.wave_gens[0].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
+        synth.wave_gens[1].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
     end
 
-`ifdef NO_MCU
+//`ifdef NO_MCU
     /* Sample tunes */
 
     /* Start 'Tilbake til Normalen' monotonic */
@@ -166,7 +174,6 @@ module top(
     // length in 8ths
     integer tbt_normalen_len[54]   = '{1,  1,  2,  1,  1,  1,  1,  1, 1, 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  1,  2,  4,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 4,  4 };
     integer tbt_normalen_tempo = 116 * 2; // 116 bpm to 8ths
-    initial wave_gen[0].freq = tbt_normalen_pitch[0];
     /* End 'Tilbake til Normalen' monotonic */
 
     integer counter = 0;
@@ -176,37 +183,21 @@ module top(
         if (counter >= (`SAMPLE_RATE * 60 / tbt_normalen_tempo) * tbt_normalen_len[idx]) begin
             counter <= 0;
             idx <= (idx + 1) % 54;
-            synth.wave_gens[0].cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
-            synth.wave_gens[1].cmds <= wave_gen.cmds | 1 << `ENVELOPE_RESET_BIT;
+            synth.wave_gens[0].cmds <= synth.wave_gens[0].cmds | 1 << `ENVELOPE_RESET_BIT;
+            synth.wave_gens[1].cmds <= synth.wave_gens[1].cmds | 1 << `ENVELOPE_RESET_BIT;
         end
         else begin
-            synth.wave_gens[0].cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
-            synth.wave_gens[1].cmds <= wave_gen.cmds & ~(1 << `ENVELOPE_RESET_BIT);
+            synth.wave_gens[0].cmds <= synth.wave_gens[0].cmds & ~(1 << `ENVELOPE_RESET_BIT);
+            synth.wave_gens[1].cmds <= synth.wave_gens[1].cmds & ~(1 << `ENVELOPE_RESET_BIT);
             synth.wave_gens[0].freq <= n[tbt_normalen_pitch[idx]];
             synth.wave_gens[1].freq <= n[tbt_normalen_pitch[idx] + 4];
             counter <= counter + 1;
         end
     end
     /* End sample tunes */
-`endif
-
-`ifdef DEVKIT
-    // Enable panning by holding btn3 or btn2 and pressing btn1
-    logic signed [31:0] lr_weight = `REAL_TO_FIXED_POINT(0);
-    always_ff @(posedge btn[1]) begin
-        if(btn[3] && lr_weight > `REAL_TO_FIXED_POINT(-1.0)) begin
-            lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(-0.1);
-        end else if(btn[2] && lr_weight < `REAL_TO_FIXED_POINT(1.0)) begin
-            lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(0.1);
-        end
-    end
-`endif
+//`endif
 
     logic locked;
-
-    // Placeholders for unused signals
-    logic in_placeholder = 1;
-    logic out_placeholder;
 
     /* Instantiate modules */
 
@@ -226,7 +217,7 @@ module top(
 
     /* SPI transmission from MCU */
 
-    spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (
+/*     spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (
         .mosi(spi_mosi),
         .miso(spi_miso),
         .sclk(spi_clk),
@@ -236,11 +227,11 @@ module top(
         .send(spi_send),
         .output_valid(output_valid)
     );
-
+ */
 
     /* Control unit - Interpret received signal */
 
-    control_unit cu0 (
+/*     control_unit cu0 (
         .sig_in(spi_recv),
         .clk(sys_clk),
         .enable(output_valid),
@@ -248,7 +239,7 @@ module top(
         .volume(synth.master_volume),
         .reverb(synth.reverb),// TODO: fix
         .wave_gens(synth.wave_gens)
-    );
+    ); */
 
 
     /* Oscillators - Wave generation start */
@@ -293,7 +284,36 @@ module top(
 
 
     /* Reverb */
+    // "Large hall"
+    /* logic signed [31:0] tau[6] = {
+        3003, 3403, 3905, 4495, 241, 83
+    };
+    logic signed [31:0] gain[7] = {
+        `REAL_TO_FIXED_POINT(0.895),
+        `REAL_TO_FIXED_POINT(0.883),
+        `REAL_TO_FIXED_POINT(0.867),
+        `REAL_TO_FIXED_POINT(0.853),
+        `REAL_TO_FIXED_POINT(0.7),
+        `REAL_TO_FIXED_POINT(0.7),
+        `REAL_TO_FIXED_POINT(0.5)
+    };
 
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] reverb_out;
+    reverberator_core #(
+        .WIDTH     (`SAMPLE_WIDTH),
+        .MAXDELAY  (`MAX_FILTER_FIFO_LENGTH )
+    )
+    u_reverberator_core(
+    	.clk    (sys_clk),
+        .sample_clk(sample_clk),
+        .enable (1'b1),
+        .rstn   (1'b1),
+        .write  (1'b1),
+        .tau    (tau    ),
+        .gain   (gain   ),
+        .in     (mixer_out),
+        .out    (reverb_out)
+    ); */
 
     /* Pan */
 
@@ -367,22 +387,6 @@ module top(
     endgenerate
     always_ff @(posedge sys_clk) begin
         num_enabled <= num_enabled_count[`N_OSCILLATORS-1];
-    end
-    
-    logic [2:0] btn_pressed;
-    always_ff @(posedge sys_clk) begin
-        for (integer j = 0; j < 3; j++) begin
-            if (gpio[j] == 1) begin
-                synth.wave_gens[j].cmds[`WAVEGEN_ENABLE_BIT] <= 1;
-                synth.wave_gens[j].cmds[`ENVELOPE_RESET_BIT] <= ~btn_pressed[j];
-                btn_pressed[j] <= 1;
-            end
-            else begin
-                synth.wave_gens[j].cmds[`WAVEGEN_ENABLE_BIT] <= 0;
-                btn_pressed[j] <= 0;
-            end
-        end // endfor
-    
     end
 
 endmodule

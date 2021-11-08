@@ -24,21 +24,24 @@ module oscillator
 );
 
     logic [31:0] envelope_gain = 0;
+    logic [31:0] duration_in_step = 0;
+    logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
     logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index = 0;
     
     logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val = 0;
     assign out = (out_val * amplitude * envelope_gain) >>> ((WIDTH-1) + `FIXED_POINT); //The bitshift is dividing by the max amplitude
 
-    // This lookuptable contains the sin values at the maximum amplitude
+    logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)-1:0] rom_addr;
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data;
+    
+    // This ROM contains the sample values at the maximum amplitude
     // to maintain as much detail as possible in the sample
-    logic signed [WIDTH + `FIXED_POINT - 1:0] sin_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
-    initial $readmemh("./lookup_tables/sin_lut.txt", sin_lut);
-
-    logic signed [WIDTH + `FIXED_POINT - 1:0] piano_lut [`MAX_SAMPLES_PER_PERIOD - 1:0];
-    initial $readmemh("./lookup_tables/piano_lut.txt", piano_lut);
-
-    logic [31:0] duration_in_step = 0;
-    logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
+    wave_rom wave_rom(
+        .clk(clk),
+        .en(enable),
+        .addr(rom_addr),
+        .data(rom_data)
+    );
 
     always_ff @ (posedge(clk)) begin
 
@@ -55,10 +58,12 @@ module oscillator
                     out_val <= (sample_index >> `FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
                 SIN: begin
-                    out_val <= sin_lut[sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)];
+                    rom_addr <= (sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT));       
+                    out_val <= rom_data;
                 end
                 PIANO: begin
-                    out_val <= piano_lut[sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)];
+                    rom_addr <= (sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)) + 3000;       
+                    out_val <= rom_data;
                 end
             endcase
 

@@ -15,6 +15,7 @@ set synth_only [lindex $argv 5]
 read_verilog -sv [glob $source_dir/structures_pkg.sv]
 
 # ! Add sources here
+read_verilog     [glob $source_dir/memory/wave_rom.v]
 read_verilog -sv [glob $source_dir/shift_registers/sipo_register.sv]
 read_verilog -sv [glob $source_dir/spi_slave.sv]
 read_verilog -sv [glob $source_dir/fifo_delay.sv]

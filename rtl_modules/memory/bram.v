@@ -1,5 +1,10 @@
 `timescale 1ns / 1ps
 
+/*
+	This module is from the following article: https://support.xilinx.com/s/article/56457?language=en_US
+	and is inferred as BRAM.
+*/
+
 module BRAM_inst
 #(
     parameter DATA_WIDTH=32,
