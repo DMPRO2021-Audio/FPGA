@@ -32,7 +32,7 @@ set_property -dict { PACKAGE_PIN T9    IOSTANDARD LVCMOS33 } [get_ports { gpio[7
 # SPI serial peripheral interface - from MCU
 set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { spi_mosi }]; #IO_L16N_T2_A15_D31_14 		Sch=ck_io[27]
 set_property -dict { PACKAGE_PIN U17   IOSTANDARD LVCMOS33 } [get_ports { spi_miso }]; #IO_L17P_T2_A14_D30_14 		Sch=ck_io[37]
-set_property -dict { PACKAGE_PIN U18   IOSTANDARD LVCMOS33 } [get_ports { spi_cs }]; #IO_L17N_T2_A13_D29_14        Sch=ck_io[11]
+set_property -dict { PACKAGE_PIN U18   IOSTANDARD LVCMOS33 } [get_ports { spi_csn }]; #IO_L17N_T2_A13_D29_14        Sch=ck_io[11]
 set_property -dict { PACKAGE_PIN P15   IOSTANDARD LVCMOS33 } [get_ports { spi_clk }]; #IO_L13P_T2_MRCC_14 			Sch=ck_io[33]
 
 # DAC transmitter
