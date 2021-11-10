@@ -20,48 +20,13 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+
 module fifo_delay #(
-    parameter WIDTH = 12, 
-    parameter LEN = 2048
-)(
-    input clk,
-    input rstn,
-    input enable,
-    input [WIDTH-1:0] in,
-    output [WIDTH-1:0] out
-);
-
-    logic [WIDTH-1:0] queue[0:LEN-1];
-
-    assign out = queue[LEN-1];
-
-    always_ff @ (posedge clk) begin
-        if (!rstn) queue <= '{default:0};
-        if (enable) begin
-            queue[0] <= in;
-            for (int i = 1; i < LEN; i = i + 1) begin
-                queue[i] <= queue[i-1];
-            end
-        end
-        else begin
-            for (int i = 0; i < LEN; i = i + 1) begin
-                queue[i] <= queue[i];
-            end
-        end
-`ifdef DEBUG
-        for (int i = 0; i < LEN; i = i + 1) begin
-            $display("[fifod] %d: %d", i, queue[i][WIDTH-1:0]);
-        end
-`endif
-    end
-endmodule
-
-
-module fifo_var_delay #(
     parameter WIDTH = 12, 
     parameter MAXLEN = 2048
 )(
     input clk,
+    input sample_clk, // Rate at which data is propagated through queue
     input rstn,
     input enable, write,
     input [31:0] len,
@@ -73,7 +38,7 @@ module fifo_var_delay #(
 
     assign out = queue[len-1];
 
-    always_ff @ (posedge clk) begin
+    always_ff @ (posedge sample_clk) begin
         if (!rstn) queue <= '{default:0};
         if (enable) begin
             queue[0] <= in;

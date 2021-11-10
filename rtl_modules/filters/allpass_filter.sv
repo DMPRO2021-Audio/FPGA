@@ -24,7 +24,7 @@
 module allpass_filter #(
     parameter WIDTH = 24    // Integer width
 ) (
-    input logic sample_clk, rstn,
+    input logic clk, sample_clk, rstn,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,
     input logic signed write,
@@ -32,51 +32,38 @@ module allpass_filter #(
     output logic signed [WIDTH+`FIXED_POINT-1:0] out
 );
     localparam WORD = WIDTH + `FIXED_POINT;
-    logic signed [WORD-1:0] t, g, g2, n0;
+    logic signed [WORD-1:0] t, g, g2 = 0, n0 = 0;
     logic signed [(WORD)*2-1:0] add0;
     integer counter = 0;
 
-    fifo_var_delay #(
+    assign t = tau;
+    assign g = gain;
+
+    fifo_delay_bram #(
         .WIDTH  (WORD  ),
         .MAXLEN (`MAX_FILTER_FIFO_LENGTH )
-    )
-    u_fifo_var_delay(
-        .clk    (sample_clk    ),
+    ) delay (
+        .clk    (clk),
+        .sample_clk(sample_clk),
         .rstn   (rstn   ),
         .enable (1'b1 ),
-        .write  (1'b1  ),
+        //.write  (1'b1  ),
         .len    (t      ),
         .in     (add0[31:0]   ),
         .out    (n0    )
     );
     
-    assign add0 = in + (n0 * g) >>> `FIXED_POINT;
+    assign add0 = in + ((n0 * g) >>> `FIXED_POINT);
 
     assign out = ((in * (-g)) >>> `FIXED_POINT) + ((n0 * g2)>>>`FIXED_POINT);
 
-    // always_ff @( posedge sample_clk ) begin
-    //     counter <= counter + 1;
-    //     $display("[allpass_filter] t = %d, c = %d, g = %f, (1-g²) = %f = %f, in = %f, add0 = %f, in*-g = %f, n0 = %f, n0*(1-g²) = %f, out = %f",
-    //         t, 
-    //         counter, 
-    //         $itor(g*`SF), 
+    always_ff @(posedge sample_clk) begin
+        assert(!$isunknown(in)) else $error("[allpass_filter] Input value was unknown");
+        assert(!$isunknown(out)) else $error("[allpass_filter] Output value was unknown");
+        // $strobe("[allpass_filter] in = 0x%x, out = 0x%x", in, out);
 
-    //         $itor(g2*`SF), 
-    //         $itor((`REAL_TO_FIXED_POINT(1.0) - (g * g) >>> `FIXED_POINT)*`SF), 
+        g2 <= (`REAL_TO_FIXED_POINT(1.0) - ((gain * gain) >>> `FIXED_POINT));
 
-    //         $itor(in*`SF), 
-    //         $itor(add0*`SF), 
-    //         $itor(((in * (-g)) >>> `FIXED_POINT)*`SF), 
-    //         $itor(n0*`SF),
-    //         $itor(((n0 * g2)>>>`FIXED_POINT)*`SF), 
-    //         $itor(out*`SF)
-    //     );
-    // end
-
-    always_ff @(posedge write) begin
-        /* Update configuration on write signal */
-        t <= tau;
-        g <= gain;
-        g2 <= (`REAL_TO_FIXED_POINT(1.0) - (gain * gain) >>> `FIXED_POINT);
     end
+
 endmodule
