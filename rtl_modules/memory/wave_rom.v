@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-    module rom (
+    module wave_rom (
     input clk,
     input en,
     input [12:0] addr,

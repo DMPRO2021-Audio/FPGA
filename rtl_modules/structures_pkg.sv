@@ -16,8 +16,8 @@ package protocol_pkg;
     import shape_pkg::*;
 
     typedef struct packed {
-        logic [31:0] gain /* FIXED POINT */;
-        logic [31:0] duration;
+        logic [7:0] gain /* FIXED POINT */;
+        logic [7:0] duration;
     } envelope_t;
 
     typedef struct packed {

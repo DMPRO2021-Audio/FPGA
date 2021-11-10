@@ -23,7 +23,7 @@ module oscillator
     output logic signed [WIDTH + `FIXED_POINT - 1:0] out
 );
 
-    logic [31:0] envelope_gain = 0;
+    logic [7:0] envelope_gain = 0;
     logic [31:0] duration_in_step = 0;
     logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
     logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index = 0;
@@ -73,8 +73,9 @@ module oscillator
                 duration_in_step <= 0;
             end else begin  
                 duration_in_step <= duration_in_step + 1;
-                if(duration_in_step >= envelopes[envelope_step].duration) begin
+                if(duration_in_step >= envelopes[envelope_step].duration << `FIXED_POINT) begin
                     if(envelope_step + 1 < `ENVELOPE_LEN) begin
+                        $display("GAIN = %d", envelopes[envelope_step].gain);
                         envelope_step <= envelope_step + 1;
                     end
                     duration_in_step <= 0;
@@ -86,9 +87,9 @@ module oscillator
                 // This is done to not divide a negative number which would not
                 // work as rate is not set as a signed value
                 if(envelopes[envelope_step + 1].gain < envelopes[envelope_step].gain) begin
-                    envelope_gain <= envelopes[envelope_step].gain - duration_in_step * (envelopes[envelope_step].gain - envelopes[envelope_step + 1].gain) / envelopes[envelope_step].duration;
+                    envelope_gain <= envelopes[envelope_step].gain - duration_in_step * (envelopes[envelope_step].gain - envelopes[envelope_step + 1].gain) / (envelopes[envelope_step].duration << `FIXED_POINT);
                 end else begin
-                    envelope_gain <= envelopes[envelope_step].gain + duration_in_step * (envelopes[envelope_step + 1].gain - envelopes[envelope_step].gain) / envelopes[envelope_step].duration;
+                    envelope_gain <= envelopes[envelope_step].gain + duration_in_step * (envelopes[envelope_step + 1].gain - envelopes[envelope_step].gain) / (envelopes[envelope_step].duration << `FIXED_POINT);
                 end
 
             end
