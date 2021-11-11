@@ -2,7 +2,7 @@
 `include "constants.svh"
 
 package shape_pkg;
-    typedef enum logic [1:0]{
+    typedef enum logic [7:0]{
         SAWTOOTH = 0,
         SQUARE,         
         SIN,           

@@ -6,6 +6,7 @@ import protocol_pkg::*;
 import shape_pkg::*;
 
 //-------------------------------------------------------------------------------------------------/
+// TODO: Integrate SPI slave
 // Control unit for FPGA, handles commands from MCU, stores configuration values and controls
 // effect modules.
 // 
@@ -15,83 +16,99 @@ import shape_pkg::*;
 // Might add some on-demand feedback to mcu later?
 //-------------------------------------------------------------------------------------------------/
 
-module control_unit #(
-parameter WIDTH = 8,                // Width of message words coming from receiver (SPI slave)
-parameter WORD = 32                 // Word size
-) (
-    input logic [WIDTH-1:0] sig_in, // Signal in
-    /* Control signals */
-    input logic clk,
-    input logic enable, 
-    input logic rstn,  
 
-    output output_update,            // Signal full message has been received
-    /* Global values of synth_t */
-    output logic    [WORD-1:0]       volume,
-    output logic    [WORD-1:0]       reverb,
-    /* Array of oscillators */
-    output wavegen_t [0:`N_OSCILLATORS-1] wave_gens
+module control_unit (
+    /* SPI */
+    input logic spi_mosi,
+    input logic spi_clk,
+    input logic spi_csn,
+    output logic spi_miso,
+    /* clocks */
+    input logic clk, sample_clk,
+    /* outputs to system */
+    output synth_t synth,
+    //output tmp_synth_t tmp_synth,
+    output logic [8:0] debug
 );
+    /* SPI details:
+    SPI csn is triggered before starting the clock, and the clock stops before csn is released. Data
+    is read from mosi soon as the clock starts running. Time from clock stop to csn released is
+    about 30us.
 
-    /* Wires and internal registers */
-    synth_t conf;
-    logic[0:$bits(synth_t)/WIDTH-1] [WIDTH-1:0]buffer  = '{default:0}; // TODO: make packed
+    MIDI is a relatively slow protocol, a quick burst test yielded a minimal gap between SPI
+    messages at abou 8.5ms. Using a system clock at 18.43 MHz (T ~= 54ns), we should be able to
+    safely interpret the message on csn release. Sample clock is at 48kHz (T ~= 20.8us), meaning
+    2-3 messages may come between two samples.
+    */
 
-    integer counter = 0;
+    synth_t input_buffer;
+    integer widx = 0, ridx = 0;
+    synth_t output_buffer;
+    logic buffer_ready, buffer_read_done;
 
-    assign volume = conf.master_volume;
-    assign reverb = conf.reverb;
+    // TODO [possible error]: spi_clk stops when signal is completely sent, stopping the pipeline here
+    always_ff @( posedge spi_clk ) begin
+        /* Shift in while SPI clock is running ~~and csn is active~~ */
+        input_buffer <=  (spi_mosi << ($bits(synth_t)-1)) | (input_buffer >> 1);//input_buffer[0] << 1 | spi_mosi;//
 
-    for (genvar i = 0; i < `N_OSCILLATORS; i++) begin
-        assign wave_gens[i] = conf.wave_gens[i];
     end
 
-    assign output_update = counter == $size(buffer);
 
-    /* Print buffer as a memory map */
-    function void print_mem(input logic[WIDTH-1:0][0:$bits(synth_t)/WIDTH-1] buffer);
-`ifdef DEBUG
-        $display("[cu] Address map of synth_t at %t", $time());
-        for (int i = 0; i < $size(buffer); i += 8) begin
-            automatic string prt = $sformatf("[cu] %04x:", i);
-            for (int ii = 0; ii < 8; ii++) begin
-                if (ii > 0 && ii % 4 == 0) prt = {prt, " |"};
-                prt = {prt, $sformatf(" %02x", buffer[i+ii])};
-            end
-            $display("%s", prt);
-        end
-`endif
-    endfunction
+    `define WGEN_BITS $bits(wavegen_t)
+    `define ENV_BITS $bits(envelope_t)
+    
+    `define ENV_ARR_OFFSET (`ENV_BITS * `ENVELOPE_LEN)
 
+    genvar i, j;
 
-    always_ff @ (posedge(clk)) begin
-        if (!rstn) begin
-            /* Explicit reset as implicit was not possible when the struct contains enums */
-            reset_synth_t(conf);
-            buffer <= '{default:0};
-        end
-        else if (enable) begin
-            $display("[cu] output_update = %d", output_update);
-            if (counter < $size(buffer)) begin
-                //output_update   <= 0;
-                buffer[counter] <= sig_in;
-                counter         <= counter + 1;
-                // Debug:
-                $display("[cu] Received sig_in = 0x%02x. counter = %d", sig_in, counter);
-                print_mem(buffer);
-                print_synth_t(synth_t'(buffer));
+    generate
+
+    for (i = 0; i < `N_OSCILLATORS; i=i+1) begin
+        always_ff @( posedge sample_clk ) begin
+            if (spi_csn) begin
+                synth.wave_gens[i].freq     <= input_buffer[ $bits(wavegen_t)*i+31  : $bits(wavegen_t)*i ];
+                synth.wave_gens[i].velocity <= input_buffer[ $bits(wavegen_t)*i+63 : $bits(wavegen_t)*i+32 ];
+                // ENVELOPE BETWEEN THESE
+                synth.wave_gens[i].shape <= wave_shape'(input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN ]);
+                synth.wave_gens[i].cmds  <=             input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN+8];
             end
-            else begin
-                /* Cast to synth_t struct. Might have to be done as an explicit function due to
-                byte alignment e.g. of enums in structure sent from mcu */
-                conf            <= synth_t'(buffer);
-                counter         <= 0;
-                //output_update   <= 1;
-            end
-        end
-        else begin
-            
-            //$display("Received struct:");
         end
     end
+    for (i = 0; i < `N_OSCILLATORS; i=i+1) begin
+        for (j = 0; j < `ENVELOPE_LEN; j=j+1) begin
+            always_ff @( posedge sample_clk ) begin
+                if (spi_csn) begin
+                    synth.wave_gens[i].envelopes[j].gain     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j ];
+                    synth.wave_gens[i].envelopes[j].duration <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+15: $bits(wavegen_t)*i+64+$bits(envelope_t)*j+8 ];
+                end
+            end
+        end
+    end
+    always_ff @( posedge sample_clk ) begin
+        if (spi_csn) begin
+            /* Nothing is being sent, clear to read */
+            /* Hardwire fields */
+            synth.master_volume <= input_buffer[ 64+$bits(wavegen_t)*`N_OSCILLATORS+31 : 64+$bits(wavegen_t)*`N_OSCILLATORS ];
+            synth.reverb.tau <= {
+                input_buffer[ $bits(synth_t)-417 : $bits(synth_t)-448 ],
+                input_buffer[ $bits(synth_t)-385 : $bits(synth_t)-416 ],
+                input_buffer[ $bits(synth_t)-353 : $bits(synth_t)-384 ],
+                input_buffer[ $bits(synth_t)-321 : $bits(synth_t)-352 ],
+                input_buffer[ $bits(synth_t)-289 : $bits(synth_t)-320 ],
+                input_buffer[ $bits(synth_t)-257 : $bits(synth_t)-288 ]
+            };
+            synth.reverb.gain <= {
+                input_buffer[ $bits(synth_t)-225 : $bits(synth_t)-256 ],
+                input_buffer[ $bits(synth_t)-193 : $bits(synth_t)-224 ],
+                input_buffer[ $bits(synth_t)-161 : $bits(synth_t)-192 ],
+                input_buffer[ $bits(synth_t)-129 : $bits(synth_t)-160 ],
+                input_buffer[ $bits(synth_t)-97  : $bits(synth_t)-128 ],
+                input_buffer[ $bits(synth_t)-65  : $bits(synth_t)-96  ],
+                input_buffer[ $bits(synth_t)-33  : $bits(synth_t)-64  ]
+            };
+            synth.pan.balance <= input_buffer[ $bits(synth_t)-1:$bits(synth_t)-32 ];
+        end
+    end
+    endgenerate
+
 endmodule
