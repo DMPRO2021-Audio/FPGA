@@ -17,7 +17,7 @@ report_timing -sort_by group -max_paths 5 -path_type summary -file $output_dir/p
 if {$synth_only == 1} { exit 0 }
 
 # Debug ILA cores
-source [file join $scripts_dir insert_ila.tcl]
+# source [file join $scripts_dir insert_ila.tcl]
 # Optimize
 # opt_design
 # power_opt_design

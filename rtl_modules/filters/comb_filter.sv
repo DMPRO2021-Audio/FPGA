@@ -21,7 +21,6 @@ module comb_filter #(
     input logic clk, sample_clk, rstn,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,       // Data in
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,// Tau and gain values
-    input logic signed write,               // Enable updating 
 
     output logic signed [WIDTH+`FIXED_POINT-1:0] out
 );
@@ -34,6 +33,9 @@ module comb_filter #(
 
     assign t = tau;
     assign g = gain;
+    
+    initial $display("[allpass_filter] tau = %d gain = %d", tau, gain);
+
 
     fifo_delay_bram #(
         .WIDTH  (WORD  ),
@@ -43,7 +45,6 @@ module comb_filter #(
         .sample_clk    (sample_clk),
         .rstn   (rstn),
         .enable (1'b1),
-        //.write  (fifo_write),
         .len    (t),
         .in     (adder),
         .out    (out_node)
@@ -52,25 +53,7 @@ module comb_filter #(
     assign out = out_node;
     assign adder = in + ((g * out_node) >>> `FIXED_POINT);
 
-    // always_ff @(posedge clk) begin
-
-    //     mult <= g * out_node;
-    //     adder <= in + (mult >>> `FIXED_POINT);
-    // end
-
     always_ff @(posedge sample_clk)
         assert(!$isunknown(in)) else $error("[comb_filter] Input value was unknown");
 
-    //     $strobe("[comb_filter] in = %x mult = %x, adder = %x. tau = %d, gain = %x", in, mult, adder, t, g);
-
-    /* Set configuration values */
-    // always_ff @(posedge clk) begin
-    //     /* Clocked by sample_clk (48kHz): tau = 1 -> 0.02083 ms delay
-    //     For a delay of 30 ms, set tau = 1440.  */
-    //     fifo_write <= write;
-    //     if (write) begin
-    //         t <= tau;   // TODO: Properly configure length from delay value
-    //         g <= gain;
-    //     end
-    // end
 endmodule

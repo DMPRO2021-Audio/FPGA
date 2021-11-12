@@ -2,7 +2,7 @@
 `include "constants.svh"
 
 package shape_pkg;
-    typedef enum logic [1:0]{
+    typedef enum logic [7:0]{
         SAWTOOTH = 0,
         SQUARE,         
         SIN,           
@@ -49,8 +49,8 @@ package protocol_pkg;
         // set to 5ms and 1.7 ms. Tau is computed as time [ms] * sample rate
         // Gain values are always < 1.0. 0, 1, 2 and 3 are for comb filters = 10 ^ (-3 t / T), where
         // T is the reverb time.
-        logic signed [31:0][0:5] tau;
-        logic signed [31:0][0:6] gain /* FIXED POINT */;
+        logic signed [0:5][31:0] tau;
+        logic signed [0:6][31:0] gain /* FIXED POINT */;
     } reverb_t;
 
     typedef struct packed {

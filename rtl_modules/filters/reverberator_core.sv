@@ -53,11 +53,10 @@ module reverberator_core #(
     // clk: system clock
     // enable: ignored
     // rstn: propagated/ingnored
-    // write: configurations are updated on posedge of write
-    input logic clk, sample_clk, enable, rstn, write,
+    input logic clk, sample_clk, enable, rstn,
 
-    input logic signed [WIDTH+`FIXED_POINT-1:0] tau[`NTAU],  // Array of tau delay values
-    input logic signed [WIDTH+`FIXED_POINT-1:0] gain[`NGAIN], // Array of g gain values
+    input logic signed [0:5][WIDTH+`FIXED_POINT-1:0] tau,   // Array of tau delay values
+    input logic signed [0:6][WIDTH+`FIXED_POINT-1:0] gain, // Array of g gain values
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
     output logic signed[WIDTH+`FIXED_POINT-1:0] out
@@ -66,13 +65,14 @@ module reverberator_core #(
     logic signed [WORD-1:0] comb_out[`NCOMB] = '{default:0};
     logic signed [WORD-1:0] allp_out[`NALLP] = '{default:0};
     logic signed [WORD-1:0] comb_add;
-    logic signed [WORD-1:0] out_reg = 0;
     logic signed [WORD-1:0] in_reg = 0;
+    logic signed [WORD-1:0] out_reg = 0;
+    logic signed [WORD-1:0] g6 = 0;
     logic init = 0;
 
-    // initial comb_out <= '{default:0};
-    // initial allp_out <= '{default:0};
+    initial begin
 
+    end
     generate;
         genvar i;
         for (i = 0; i < `NCOMB; ++i) begin
@@ -87,7 +87,6 @@ module reverberator_core #(
                 .in         (in_reg    ),
                 .tau        (tau[i]   ),
                 .gain       (gain[i]  ),
-                //.write      (write ),
                 .out        (comb_out[i])
             );
         end
@@ -100,9 +99,8 @@ module reverberator_core #(
         .sample_clk (sample_clk),
         .rstn       (rstn  ),
         .in         (comb_add),
-        .tau        (tau[0+`NCOMB]),
-        .gain       (gain[0+`NCOMB]),
-        //.write      (inner_write ),
+        .tau        (tau[4]),
+        .gain       (gain[4]),
         .out        (allp_out[0])
     );
 
@@ -113,29 +111,25 @@ module reverberator_core #(
         .sample_clk (sample_clk),
         .rstn       (rstn  ),
         .in         (allp_out[0]),
-        .tau        (tau[1+`NCOMB]),
-        .gain       (gain[1+`NCOMB]),
-        //.write      (inner_write ),
+        .tau        (tau[5]),
+        .gain       (gain[5]),
         .out        (allp_out[1])
     );
 
-    // always_ff @(posedge clk) begin
-    //     comb_add[0] <= comb_out[0] + comb_out[1];
-    //     comb_add[1] <= comb_out[2] + comb_out[3];
-    //     comb_add[2] <= comb_add[0] + comb_add[1];
-    // end
-    // ^ Instead of this:
     assign comb_add = comb_out[0] + comb_out[1] + comb_out[2] + comb_out[3];
 
     // Should be safe as `gain < 1.0`
     assign out = out_reg;
 
     always_ff @( posedge sample_clk ) begin
+        g6 <= gain[6];
         if (init) begin
             if (enable) begin
+                // $display("[reverberator_core] in = %d comb_out = {%d, %d, %d, %d} allp_out = {%d, %d} gain[6] = %d out = %d",
+                //         in, comb_out[0], comb_out[1], comb_out[2], comb_out[3], allp_out[0], allp_out[1], gain[6], out_reg);
                 assert(!$isunknown(in)) else $error("[reverberator_core] Input value was unknown");
                 in_reg <= in;
-                out_reg <= in + ((gain[6] * allp_out[1]) >>> `FIXED_POINT);
+                out_reg <= in_reg + ((g6 * allp_out[1]) >>> `FIXED_POINT);
             end
         end
         else begin
@@ -143,22 +137,9 @@ module reverberator_core #(
             in_reg <= 32'h0;
             out_reg <= 0;
         end
-        // $strobe("\nin = 0x%x, out = 0x%x", in_reg, out_reg);
     end
-
-    // always_ff @(posedge clk) begin
-    //     /* Check valid value before allowing update */
-    //     if (write) begin
-    //         for (integer i = 0; i < `NGAIN; i++) begin
-    //             assert (1'b1 <<< `FIXED_POINT >= gain[i]) 
-    //             else   $error("Reverberator gain should be =< 1 but was gain[%d] = %f", i, $itor(gain[i]*`SF));
-    //         end
-    //         gain7 <= gain[6];
-    //     end
-    // end
 
 endmodule
 //  2^24-1 = 16_777_215
 //  2^23-1 = 8388607
 //  allp_out[1] = -724_315.292969, in = 176_679.437500, comb_add = 5_367_681.011719, gain[6] = 0.699219,
-//  out = in - gain[`NFILT] * allp_out[1] = 

@@ -15,7 +15,7 @@ module top(
 
     input logic spi_mosi,
     output logic spi_miso,
-    input logic spi_cs,
+    input logic spi_csn,
     input logic spi_clk,
 
     output logic dac_data,           // jb[2]
@@ -23,18 +23,44 @@ module top(
     output logic dac_lr_clk,         // jb[3]
     output logic dac_bit_clk,        // jb[1]
 
-    input logic [7:0] gpio,
+    output logic [7:0] gpio
 
-    output logic [3:0] led
 );
     /* Declare variables */
 
+    logic sys_clk;                  // ~18MHz system clock
+    logic sample_clk;               // Clock at the sampling frequency
+    logic lrclk;                    // DAC LR select
+    logic sclk;                     // DAC serial clock/bit clock/data clock out
+    logic sd;                       // DAC serial data
+
+    synth_t synth;                  // Global configurations
+    // synth_t hard;
+    // initial begin
+    //     for (int i = 0; i < `N_OSCILLATORS; i++) begin
+    //         hard.wave_gens[i].freq = 32'h1f3f5f7f;
+    //         hard.wave_gens[i].velocity = 32'd500000;
+    //         for (int j = 0; j < `ENVELOPE_LEN; j++) begin
+    //             hard.wave_gens[i].envelopes[j].gain = 8'(i);
+    //             hard.wave_gens[i].envelopes[j].duration = 8'(j);
+    //         end
+    //         hard.wave_gens[i].shape = SAWTOOTH;
+    //         hard.wave_gens[i].cmds = 8'd10;
+    //     end
+    //     hard.master_volume = 32'd550000;
+    //     hard.reverb.tau = {32'h1010, 32'h2020, 32'h3030, 32'h4040, 32'h5050, 32'h6060};
+    //     hard.reverb.gain = {32'h7070, 32'h8080, 32'h9090, 32'ha0a0, 32'hb0b0, 32'hc0c0, 32'hd0d0};
+    //     hard.pan.balance = 32'd0;
+    // end
+
+
+    initial sample_clk <= 0;
+    initial sclk <= 0;
+    initial $display("Size with %d oscillators and %d envelopes of synth_t: %d bits = %d Bytes", `N_OSCILLATORS, `ENVELOPE_LEN, $bits(synth_t), $bits(synth_t) / 8);
+
+`ifdef NODEF
     /* Note values C3 to B5 */
-<<<<<<< HEAD
     integer n[62];
-=======
-    integer n[55];
->>>>>>> a311b2328b9d1c65df9e6136afed07a8034073b4
     initial n = '{
         `REAL_TO_FIXED_POINT(65.406),   // C2       0
         `REAL_TO_FIXED_POINT(69.296),   // C#/Db2
@@ -94,7 +120,6 @@ module top(
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
-<<<<<<< HEAD
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
@@ -102,28 +127,8 @@ module top(
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
         `REAL_TO_FIXED_POINT(0.00000),  //
-=======
->>>>>>> a311b2328b9d1c65df9e6136afed07a8034073b4
         `REAL_TO_FIXED_POINT(0.00000)   //
     };
-
-    logic sys_clk;                  // ~18MHz system clock
-    logic sample_clk;               // Clock at the sampling frequency
-    logic lrclk;                    // DAC LR select
-    logic sclk;                     // DAC serial clock/bit clock/data clock out
-    logic sd;                       // DAC serial data
-
-    logic rstn;
-
-    logic[`SPI_WIDTH-1:0] spi_recv; // Receiving register
-    logic[`SPI_WIDTH-1:0] spi_send; // Dummy send register (functionality not yet implemented
-    logic output_valid;
-
-    synth_t synth;                  // Global configurations
-
-    initial sample_clk <= 0;
-    initial sclk <= 0;
-
     /* Setup global synth varables */
     initial begin
         synth.pan.balance = `REAL_TO_FIXED_POINT(0);
@@ -140,34 +145,33 @@ module top(
             synth.wave_gens[i].freq = n[12 + i*2];
             synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
 
-            synth.wave_gens[i].envelopes[0].gain = `REAL_TO_FIXED_POINT(0);
-            synth.wave_gens[i].envelopes[0].duration = 1200;
+            synth.wave_gens[i].envelopes[0].gain = 0;
+            synth.wave_gens[i].envelopes[0].duration = 5;
 
-            synth.wave_gens[i].envelopes[1].gain = `REAL_TO_FIXED_POINT(2);
-            synth.wave_gens[i].envelopes[1].duration = 1200;
+            synth.wave_gens[i].envelopes[1].gain = 8'hff;
+            synth.wave_gens[i].envelopes[1].duration = 5;
 
-            synth.wave_gens[i].envelopes[2].gain = `REAL_TO_FIXED_POINT(1.5);
-            synth.wave_gens[i].envelopes[2].duration = 1200;
+            synth.wave_gens[i].envelopes[2].gain = 212;
+            synth.wave_gens[i].envelopes[2].duration = 10;
 
-            synth.wave_gens[i].envelopes[3].gain = `REAL_TO_FIXED_POINT(1);
-            synth.wave_gens[i].envelopes[3].duration = 2400;
+            synth.wave_gens[i].envelopes[3].gain = 176;
+            synth.wave_gens[i].envelopes[3].duration = 20;
 
-            synth.wave_gens[i].envelopes[4].gain = `REAL_TO_FIXED_POINT(1);
-            synth.wave_gens[i].envelopes[4].duration = 4800;
+            synth.wave_gens[i].envelopes[4].gain = 8'h80;
+            synth.wave_gens[i].envelopes[4].duration = 2 * 20;
 
-            synth.wave_gens[i].envelopes[5].gain = `REAL_TO_FIXED_POINT(0.5);
-            synth.wave_gens[i].envelopes[5].duration = 4800;
+            synth.wave_gens[i].envelopes[5].gain = 128;
+            synth.wave_gens[i].envelopes[5].duration = 3 * 20;
 
-            synth.wave_gens[i].envelopes[6].gain = `REAL_TO_FIXED_POINT(0.25);
-            synth.wave_gens[i].envelopes[6].duration = 3 * 9600;
+            synth.wave_gens[i].envelopes[6].gain = 64;
+            synth.wave_gens[i].envelopes[6].duration = 3 * 40;
 
-            synth.wave_gens[i].envelopes[7].gain = `REAL_TO_FIXED_POINT(0.1);
-            synth.wave_gens[i].envelopes[7].duration = 4800;
+            synth.wave_gens[i].envelopes[7].gain = 64;
+            synth.wave_gens[i].envelopes[7].duration = 0;
         end
         synth.wave_gens[2].velocity = 600000;
     end
 
-//`ifdef NO_MCU
     /* Sample tunes */
 
     // /* Start 'Tilbake til Normalen' monotonic */
@@ -234,63 +238,61 @@ module top(
         end
     end
     /* End sample tunes */
+/////////////
 `endif
-
-// `ifdef DEVKIT
-//     // Enable panning by holding btn3 or btn2 and pressing btn1
-//     logic signed [31:0] lr_weight = `REAL_TO_FIXED_POINT(0);
-//     always_ff @(posedge btn[1]) begin
-//         if(btn[3] && lr_weight > `REAL_TO_FIXED_POINT(-1.0)) begin
-//             lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(-0.1);
-//         end else if(btn[2] && lr_weight < `REAL_TO_FIXED_POINT(1.0)) begin
-//             lr_weight <= lr_weight + `REAL_TO_FIXED_POINT(0.1);
-//         end
-//     end
-// `endif
-
-    logic locked;
 
     /* Instantiate modules */
 
-`ifndef DEBUG
     /* Create correct clock on dev board */
+    // logic locked = 1;
+    // assign sys_clk = MASTER_CLK;
     clk_wiz clk_wiz (
         .clk_in(MASTER_CLK),
         .reset(0),
         .clk_out(sys_clk),
         .locked(locked)
     );
-`else
-    assign sys_clk = MASTER_CLK;
-    assign locked = 1;
-`endif
 
 
     /* SPI transmission from MCU */
-
-    // spi_slave #(.WIDTH(`SPI_WIDTH)) spi0 (
-    //     .mosi(spi_mosi),
-    //     .miso(spi_miso),
-    //     .sclk(spi_clk),
-    //     .clk(sys_clk),
-    //     .csn(spi_cs),
-    //     .recv(spi_recv),
-    //     .send(spi_send),
-    //     .output_valid(output_valid)
-    // );
-
-
     // /* Control unit - Interpret received signal */
 
-    // control_unit cu0 (
-    //     .sig_in(spi_recv),
-    //     .clk(sys_clk),
-    //     .enable(output_valid),
-    //     .rstn(1'b1),
-    //     .volume(synth.master_volume),
-    //     .reverb(synth.reverb),// TODO: fix
-    //     .wave_gens(synth.wave_gens)
-    // );
+    control_unit u_control_unit (
+    	.spi_mosi   (spi_mosi   ),
+        .spi_clk    (spi_clk    ),
+        .spi_csn    (spi_csn    ),
+        .spi_miso   (spi_miso   ),
+        .clk        (clk        ),
+        .sample_clk (sample_clk ),
+        .synth      (synth      )
+    );
+    integer counter = 0;
+    logic half_clk = 0;
+    logic quarter_clk = 0;
+    // assign gpio[0] = half_clk;
+    // assign gpio[4] = spi_csn;
+    // //assign gpio[2] = spi_mosi;
+    // always_ff @( negedge sys_clk ) begin
+    //     half_clk <= ~half_clk;
+    //     if (half_clk) begin
+    //         if (spi_csn) begin
+    //             gpio[1] <= ~spi_csn;
+    //             gpio[1] <= counter < $bits(synth_t) ? 0 : 1; // csn_out
+    //             gpio[2] <= counter < $bits(synth_t) ? synth[counter] : 0;
+    //             //gpio[2] <= counter < $bits(synth_t) ? hard[counter] : 0;
+    //             counter <= (counter + 1) % ($bits(synth_t) + 32);
+    //         end else begin
+    //             counter <= 0;
+    //             gpio[1] <= 1;
+    //         end 
+    //     end
+    // end
+    // assign gpio[3] = sample_clk;
+    // assign gpio[4] = sys_clk;
+    // assign gpio[5] = sys_clk;
+    // assign gpio[6] = sys_clk;
+    // assign gpio[7] = sys_clk;
+    //assign gpio = synth.wave_gens[0].freq[23:16];
 
 
     /* Oscillators - Wave generation start */
@@ -315,8 +317,6 @@ module top(
 
     endgenerate
 
-    assign led[3:0] = num_enabled;
-
     /* Mixer */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] mixer_out;
@@ -336,18 +336,18 @@ module top(
 
 
     // "Large hall"
-    logic signed [31:0] tau[6] = {
-        3003, 3403, 3905, 4495, 241, 83
-    };
-    logic signed [31:0] gain[7] = {
-        `REAL_TO_FIXED_POINT(0.895),
-        `REAL_TO_FIXED_POINT(0.883),
-        `REAL_TO_FIXED_POINT(0.867),
-        `REAL_TO_FIXED_POINT(0.853),
-        `REAL_TO_FIXED_POINT(0.7),
-        `REAL_TO_FIXED_POINT(0.7),
-        `REAL_TO_FIXED_POINT(0.7)
-    };
+    // logic signed [31:0] tau[6] = {
+    //     3003, 3403, 3905, 4495, 241, 83
+    // };
+    // logic signed [31:0] gain[7] = {
+    //     `REAL_TO_FIXED_POINT(0.895),
+    //     `REAL_TO_FIXED_POINT(0.883),
+    //     `REAL_TO_FIXED_POINT(0.867),
+    //     `REAL_TO_FIXED_POINT(0.853),
+    //     `REAL_TO_FIXED_POINT(0.7),
+    //     `REAL_TO_FIXED_POINT(0.7),
+    //     `REAL_TO_FIXED_POINT(0.7)
+    // };
     integer reverb_out;
 
     /* Reverb */
@@ -356,9 +356,8 @@ module top(
         .sample_clk (sample_clk ),
         .enable     (1'b1       ),
         .rstn       (1'b1       ),
-        .write      (1'b1       ),
-        .tau        (tau        ),
-        .gain       (gain       ),
+        .tau        (synth.reverb.tau ),
+        .gain       (synth.reverb.gain),
         .in         (mixer_out  ),
         .out        (reverb_out)
     );
@@ -369,22 +368,22 @@ module top(
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT-1: 0] left;
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT-1: 0] right;
 
-    pan #(.WIDTH(24)) pan(
-        .clk(sample_clk),
-        .in(reverb_out),
-        .lr_weight(synth.pan.balance),
+    // pan #(.WIDTH(24)) pan(
+    //     .clk(sample_clk),
+    //     .in(reverb_out), //TODO: Use Reverb_out
+    //     .lr_weight(synth.pan.balance),
 
-        .left(left),
-        .right(right)
-    );
+    //     .left(left),
+    //     .right(right)
+    // );
 
     /* DAC transmission - LAST STAGE */
 
     dac_transmitter #(.WIDTH(`SAMPLE_WIDTH)) transmitter0(
         .clk(sclk),
         .enable(locked),
-        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(left)),
-        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(right)),
+        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(reverb_out)),
+        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(reverb_out)),
 
         .lrclk(lrclk),  // Left right channel select
         .sd(sd)
