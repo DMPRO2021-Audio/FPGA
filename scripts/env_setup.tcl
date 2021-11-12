@@ -22,7 +22,6 @@ read_verilog -sv [glob $source_dir/spi_slave.sv]
 read_verilog     [glob $source_dir/dac_transmitter.v]
 read_verilog -sv [glob $source_dir/constants.svh]
 read_verilog -sv [glob $source_dir/control_unit.sv]
-read_verilog     [glob $source_dir/dac_transmitter.v]
 read_verilog -sv [glob $source_dir/filters/comb_filter.sv]
 read_verilog -sv [glob $source_dir/filters/allpass_filter.sv]
 read_verilog -sv [glob $source_dir/filters/reverberator_core.sv]
@@ -32,8 +31,6 @@ read_verilog     [glob $source_dir/memory/bram.v]
 read_verilog -sv [glob $source_dir/mixer.sv]
 read_verilog -sv [glob $source_dir/oscillator.sv]
 read_verilog -sv [glob $source_dir/pan.sv]
-read_verilog -sv [glob $source_dir/shift_registers/sipo_register.sv]
-read_verilog -sv [glob $source_dir/spi_slave.sv]
 
 if {$devkit == 1} {
     # Use this when using 100MHz clock (devboard)
