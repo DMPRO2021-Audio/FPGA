@@ -27,7 +27,6 @@ module allpass_filter #(
     input logic clk, sample_clk, rstn,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,
-    input logic signed write,
 
     output logic signed [WIDTH+`FIXED_POINT-1:0] out
 );
@@ -39,6 +38,8 @@ module allpass_filter #(
     assign t = tau;
     assign g = gain;
 
+    initial $display("[allpass_filter] tau = %d gain = %d", tau, gain);
+
     fifo_delay_bram #(
         .WIDTH  (WORD  ),
         .MAXLEN (`MAX_FILTER_FIFO_LENGTH )
@@ -47,7 +48,6 @@ module allpass_filter #(
         .sample_clk(sample_clk),
         .rstn   (rstn   ),
         .enable (1'b1 ),
-        //.write  (1'b1  ),
         .len    (t      ),
         .in     (add0[31:0]   ),
         .out    (n0    )

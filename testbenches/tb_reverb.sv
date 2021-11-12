@@ -6,7 +6,6 @@ import shape_pkg::*;
 import protocol_pkg::*;
 
 module tb_reverb;
-
     logic clk = 0;
     logic sample_clk = 0;
     logic enable;
@@ -54,12 +53,11 @@ module tb_reverb;
 
     assign reverb_in = mixer_out;
 
-    logic write_reverb = 0;
     // "Large hall"
-    logic signed [31:0] tau[6] = {
+    logic signed [0:5][31:0] tau = '{
         3003, 3403, 3905, 4495, 241, 83
     };
-    logic signed [31:0] gain[7] = {
+    logic signed [0:6][31:0] gain = '{
         `REAL_TO_FIXED_POINT(0.895),
         `REAL_TO_FIXED_POINT(0.883),
         `REAL_TO_FIXED_POINT(0.867),
@@ -78,7 +76,6 @@ module tb_reverb;
     	.sample_clk(sample_clk),
         .enable (1'b1 ),
         .rstn   (1'b1   ),
-        .write  (write  ),
         .tau    (tau    ),
         .gain   (gain   ),
         .in     (reverb_in),
@@ -96,8 +93,15 @@ module tb_reverb;
     end
 
     initial begin
+        integer i;
 
         reset_synth_t(synth);
+        for (i = 0; i < 6; i++) begin
+            $display("[tb_reverb] tau[%01d] = %d",i, tau[i]);
+        end
+        for (i = 0; i < 7; i++) begin
+            $display("[tb_reverb] gain[%01d] = %d",i, gain[i]);
+        end
 
         synth.master_volume = 1024;
 
@@ -106,21 +110,33 @@ module tb_reverb;
             synth.wave_gens[i].shape = PIANO;
             synth.wave_gens[i].freq = 0;
 
-            synth.wave_gens[i].envelopes[0].duration = 3000;
             synth.wave_gens[i].envelopes[0].gain = 0;
-            
-            synth.wave_gens[i].envelopes[1].duration = 3000;
-            synth.wave_gens[i].envelopes[1].gain = 125;
+            synth.wave_gens[i].envelopes[0].duration = 5;
 
-            synth.wave_gens[i].envelopes[2].duration = 1000;
-            synth.wave_gens[i].envelopes[2].gain = 75;
+            synth.wave_gens[i].envelopes[1].gain = 8'hff;
+            synth.wave_gens[i].envelopes[1].duration = 5;
 
-            for(int ii = 3; ii < `ENVELOPE_LEN; ii++) begin
-                synth.wave_gens[i].envelopes[ii].duration = 15000;
-                synth.wave_gens[i].envelopes[ii].gain = 75;
-            end
-        
+            synth.wave_gens[i].envelopes[2].gain = 212;
+            synth.wave_gens[i].envelopes[2].duration = 10;
+
+            synth.wave_gens[i].envelopes[3].gain = 176;
+            synth.wave_gens[i].envelopes[3].duration = 20;
+
+            synth.wave_gens[i].envelopes[4].gain = 8'h80;
+            synth.wave_gens[i].envelopes[4].duration = 2 * 20;
+
+            synth.wave_gens[i].envelopes[5].gain = 128;
+            synth.wave_gens[i].envelopes[5].duration = 3 * 20;
+
+            synth.wave_gens[i].envelopes[6].gain = 64;
+            synth.wave_gens[i].envelopes[6].duration = 3 * 40;
+
             synth.wave_gens[i].envelopes[7].gain = 0;
+            synth.wave_gens[i].envelopes[7].duration = 0;
+        end
+
+        for (int i = 0; i < `ENVELOPE_LEN; i++) begin
+            $display("[tb_reverb] envelope gain %d = 0x%x", i, synth.wave_gens[0].envelopes[i].gain);
         end
 
         // Enable to oscillators 0-2
