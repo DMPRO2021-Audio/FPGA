@@ -27,7 +27,6 @@ module control_unit (
     input logic clk, sample_clk,
     /* outputs to system */
     output synth_t synth,
-    //output tmp_synth_t tmp_synth,
     output logic [8:0] debug
 );
     /* SPI details:
@@ -42,9 +41,6 @@ module control_unit (
     */
 
     synth_t input_buffer;
-    integer widx = 0, ridx = 0;
-    synth_t output_buffer;
-    logic buffer_ready, buffer_read_done;
 
     // TODO [possible error]: spi_clk stops when signal is completely sent, stopping the pipeline here
     always_ff @( posedge spi_clk ) begin
@@ -52,12 +48,6 @@ module control_unit (
         input_buffer <=  (spi_mosi << ($bits(synth_t)-1)) | (input_buffer >> 1);//input_buffer[0] << 1 | spi_mosi;//
 
     end
-
-
-    `define WGEN_BITS $bits(wavegen_t)
-    `define ENV_BITS $bits(envelope_t)
-    
-    `define ENV_ARR_OFFSET (`ENV_BITS * `ENVELOPE_LEN)
 
     genvar i, j;
 
@@ -88,7 +78,7 @@ module control_unit (
         if (spi_csn) begin
             /* Nothing is being sent, clear to read */
             /* Hardwire fields */
-            synth.master_volume <= input_buffer[ 64+$bits(wavegen_t)*`N_OSCILLATORS+31 : 64+$bits(wavegen_t)*`N_OSCILLATORS ];
+            synth.master_volume <= input_buffer[$bits(wavegen_t)*`N_OSCILLATORS+31 : $bits(wavegen_t)*`N_OSCILLATORS ];
             synth.reverb.tau <= {
                 input_buffer[ $bits(synth_t)-417 : $bits(synth_t)-448 ],
                 input_buffer[ $bits(synth_t)-385 : $bits(synth_t)-416 ],
