@@ -34,7 +34,7 @@ module comb_filter #(
     assign t = tau;
     assign g = gain;
     
-    initial $display("[allpass_filter] tau = %d gain = %d", tau, gain);
+    initial $display("[allpass_filter] tau = %d gain = %d in = %d", tau, gain, in);
 
 
     fifo_delay_bram #(

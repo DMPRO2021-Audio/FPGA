@@ -59,7 +59,8 @@ module reverberator_core #(
     input logic signed [0:6][WIDTH+`FIXED_POINT-1:0] gain, // Array of g gain values
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
-    output logic signed[WIDTH+`FIXED_POINT-1:0] out
+    output logic signed[WIDTH+`FIXED_POINT-1:0] out,
+    output logic signed[32*4-1:0] debug
 );
     localparam WORD = WIDTH + `FIXED_POINT;
     logic signed [WORD-1:0] comb_out[`NCOMB] = '{default:0};
@@ -130,6 +131,7 @@ module reverberator_core #(
                 assert(!$isunknown(in)) else $error("[reverberator_core] Input value was unknown");
                 in_reg <= in;
                 out_reg <= in_reg + ((g6 * allp_out[1]) >>> `FIXED_POINT);
+                debug <= {in, g6, comb_add, allp_out[0]};
             end
         end
         else begin

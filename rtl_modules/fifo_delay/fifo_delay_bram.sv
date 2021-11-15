@@ -13,7 +13,7 @@ module fifo_delay_bram #(
     output logic [WIDTH-1:0] out
 );
     logic [$clog2(MAXLEN)-1:0] ridx = 0, widx = 0, init = 0; // Read and write index
-    logic [WIDTH-1:0] data_out;
+    logic [WIDTH-1:0] data_out = 0;
 
     BRAM_inst #(
         .DATA_WIDTH(WIDTH),
@@ -23,18 +23,18 @@ module fifo_delay_bram #(
         .read_addr (ridx),
         .write_addr (widx),
         .wr_en (enable),
-        .clk (clk),
+        .clk (sample_clk),
         .data_out (data_out)
     );
 
     //assign out = out_reg;
 
     always_ff @ ( posedge sample_clk ) begin
-        // $strobe("[fifo_bram] in = %x, widx = %x, ridx = %x, len = %x, out_reg = %x data_out = %x", in, widx, ridx, len, out_reg, data_out);
+        $strobe("[fifo_bram] in = %x, widx = %x, ridx = %x, len = %x, out = %x data_out = %x", in, widx, ridx, len, out, data_out);
         if (enable) begin
             widx <= (widx + 1) % len;
             ridx <= (widx + 2) % len;
-            if (init < len-1) begin
+            if (init < len) begin
                 /* Protect against uninitialized data by forcing zero until any real data has had 
                 the chance to reach through */
                 init <= init + 1;
