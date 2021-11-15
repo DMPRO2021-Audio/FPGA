@@ -44,6 +44,13 @@ if {$devkit == 1} {
     read_xdc $constr_dir/Custom-PCB.xdc
 }
 
+# Add ILA IP:
+# create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -module_name ila_0
+# set_property -dict [list CONFIG.C_PROBE7_WIDTH {32} CONFIG.C_PROBE6_WIDTH {32} CONFIG.C_PROBE5_WIDTH {32} CONFIG.C_PROBE4_WIDTH {32} CONFIG.C_PROBE3_WIDTH {32} CONFIG.C_PROBE2_WIDTH {2} CONFIG.C_PROBE0_WIDTH {3808} CONFIG.C_DATA_DEPTH {4096} CONFIG.C_NUM_OF_PROBES {8} CONFIG.ALL_PROBE_SAME_MU {true}] [get_ips ila_0]
+# generate_target {instantiation_template} [get_files /home/andreas/dev/project_1/project_1.srcs/sources_1/ip/ila_0/ila_0.xci]
+# update_compile_order -fileset sources_1
+# generate_target all [get_files  /home/andreas/dev/project_1/project_1.srcs/sources_1/ip/ila_0/ila_0.xci]
+
 
 # ! top is loaded last
 read_verilog -sv [glob $source_dir/top.sv]

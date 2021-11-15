@@ -25,3 +25,5 @@ refresh_hw_device [lindex [get_hw_devices] 0]
 
 # upload_hw_ila_data
 # write_debug_probes
+# Generate memory configuration
+# write_cfgmem  -format mcs -size 16 -interface SPIx1 -loadbit {up 0x00000000 "/home/andreas/ntnu/dmpro_tdt4295/FPGA/design_output/program.bit" } -checksum -force -file "/home/andreas/ntnu/dmpro_tdt4295/FPGA/program.mcs"
