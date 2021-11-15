@@ -6,14 +6,11 @@ import protocol_pkg::*;
 import shape_pkg::*;
 
 //-------------------------------------------------------------------------------------------------/
-// TODO: Integrate SPI slave
 // Control unit for FPGA, handles commands from MCU, stores configuration values and controls
-// effect modules.
-// 
-// ## When enable signal is activated
-// Clock in config struct, WIDTH bits at the time
+// effect modules. Implemented as shift register, left shifting bitstream from mcu and copying
+// data when spi_clk stops.
 //
-// Might add some on-demand feedback to mcu later?
+// Reset bit is cleared after one cycle.
 //-------------------------------------------------------------------------------------------------/
 
 
@@ -29,25 +26,24 @@ module control_unit (
     output synth_t synth,
     output logic [8:0] debug
 );
-    /* SPI details:
-    SPI csn is triggered before starting the clock, and the clock stops before csn is released. Data
-    is read from mosi soon as the clock starts running. Time from clock stop to csn released is
-    about 30us.
-
-    MIDI is a relatively slow protocol, a quick burst test yielded a minimal gap between SPI
-    messages at abou 8.5ms. Using a system clock at 18.43 MHz (T ~= 54ns), we should be able to
-    safely interpret the message on csn release. Sample clock is at 48kHz (T ~= 20.8us), meaning
-    2-3 messages may come between two samples.
-    */
+    //---------------------------------------------------------------------------------------------/
+    // SPI details:
+    // SPI csn is triggered before starting the clock, and the clock stops before csn is released.
+    // Data is read from mosi soon as the clock starts running. Time from clock stop to csn released
+    // is about 30us.
+    //
+    // MIDI is a relatively slow protocol, a quick burst test yielded a minimal gap between SPI
+    // messages at abou 8.5ms. Using a system clock at 18.43 MHz (T ~= 54ns), we should be able to
+    // safely interpret the message on csn release. Sample clock is at 48kHz (T ~= 20.8us), meaning
+    // 2-3 messages may come between two samples.
+    //---------------------------------------------------------------------------------------------/
 
     synth_t input_buffer;
     logic [1:0] dirty_bit = 0;
 
-    // TODO [possible error]: spi_clk stops when signal is completely sent, stopping the pipeline here
     always_ff @( posedge spi_clk ) begin
-        /* Shift in while SPI clock is running ~~and csn is active~~ */
-        input_buffer <=  (spi_mosi << ($bits(synth_t)-1)) | (input_buffer >> 1);//input_buffer[0] << 1 | spi_mosi;//
-
+        /* Shift in while SPI clock is running */
+        input_buffer <=  (spi_mosi << ($bits(synth_t)-1)) | (input_buffer >> 1);
     end
 
     genvar i, j;
@@ -56,15 +52,16 @@ module control_unit (
 
     for (i = 0; i < `N_OSCILLATORS; i=i+1) begin
         always_ff @( posedge sample_clk ) begin
-            if (spi_csn && dirty_bit) begin
-                if(dirty_bit == 1) begin
-                    synth.wave_gens[i].freq     <= input_buffer[ $bits(wavegen_t)*i+31  : $bits(wavegen_t)*i ];
+            if (spi_csn && dirty_bit > 0) begin
+                if (dirty_bit == 2'd2) begin
+                    synth.wave_gens[i].cmds <= synth.wave_gens[i].cmds & ~(1 << `ENVELOPE_RESET_BIT); // Clear reset bit on dirty_bit == 3
+                end
+                else begin
+                    synth.wave_gens[i].freq     <= input_buffer[ $bits(wavegen_t)*i+31 : $bits(wavegen_t)*i    ];
                     synth.wave_gens[i].velocity <= input_buffer[ $bits(wavegen_t)*i+63 : $bits(wavegen_t)*i+32 ];
                     // ENVELOPE BETWEEN THESE
-                    synth.wave_gens[i].shape <= wave_shape'(input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN ]);
-                    synth.wave_gens[i].cmds  <=             input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN+8];
-                end else if (dirty_bit == 2 && synth.wave_gens[i].cmds[`ENVELOPE_RESET_BIT]) begin
-                    synth.wave_gens[i].cmds <= synth.wave_gens[i].cmds & ~(1 << `ENVELOPE_RESET_BIT);
+                    synth.wave_gens[i].shape <= wave_shape'(input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN   ]);
+                    synth.wave_gens[i].cmds  <=             input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN+8 ];
                 end
             end
         end
@@ -72,21 +69,22 @@ module control_unit (
     for (i = 0; i < `N_OSCILLATORS; i=i+1) begin
         for (j = 0; j < `ENVELOPE_LEN; j=j+1) begin
             always_ff @( posedge sample_clk ) begin
-                if (spi_csn && dirty_bit == 1) begin
-                    synth.wave_gens[i].envelopes[j].gain     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j ];
-                    synth.wave_gens[i].envelopes[j].duration <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+15: $bits(wavegen_t)*i+64+$bits(envelope_t)*j+8 ];
+                if (spi_csn && dirty_bit > 0) begin
+                    synth.wave_gens[i].envelopes[j].gain     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*j   ];
+                    synth.wave_gens[i].envelopes[j].duration <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j+8 ];
                 end
             end
         end
     end
     always_ff @( posedge sample_clk ) begin
-        if (spi_csn && dirty_bit) begin
+        if (spi_csn && dirty_bit > 0) begin
 
-            
-            if(dirty_bit == 1) begin
-                dirty_bit <= 2;
-                /* Nothing is being sent, clear to read */
-                /* Hardwire fields */
+            if(dirty_bit == 2'd2) begin
+                dirty_bit <= 0;
+            end
+            else if(dirty_bit > 0) begin
+                dirty_bit <= dirty_bit + 2'd1;
+                /* Nothing is being sent, clear to read. Hardwire fields */
                 synth.master_volume <= input_buffer[$bits(wavegen_t)*`N_OSCILLATORS+31 : $bits(wavegen_t)*`N_OSCILLATORS ];
                 synth.reverb.tau <= {
                     input_buffer[ $bits(synth_t)-417 : $bits(synth_t)-448 ],
@@ -105,12 +103,10 @@ module control_unit (
                     input_buffer[ $bits(synth_t)-65  : $bits(synth_t)-96  ],
                     input_buffer[ $bits(synth_t)-33  : $bits(synth_t)-64  ]
                 };
-            end else if(dirty_bit == 2) begin
-                dirty_bit <= 0;
+                synth.pan.balance <= input_buffer[ $bits(synth_t)-1:$bits(synth_t)-32 ];
             end
-            synth.pan.balance <= input_buffer[ $bits(synth_t)-1:$bits(synth_t)-32 ];
         end else if(!spi_csn) begin
-            dirty_bit <= 1;
+            dirty_bit <= 2'd1;
         end
     end
     endgenerate
