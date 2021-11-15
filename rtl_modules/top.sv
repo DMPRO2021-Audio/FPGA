@@ -348,19 +348,19 @@ module top(
     //     `REAL_TO_FIXED_POINT(0.7),
     //     `REAL_TO_FIXED_POINT(0.7)
     // };
-    integer reverb_out;
+    // integer reverb_out;
 
-    /* Reverb */
-    reverberator_core u_reverberator_core(
-        .clk        (clk        ), // 18 MHz system clock
-        .sample_clk (sample_clk ),
-        .enable     (1'b1       ),
-        .rstn       (1'b1       ),
-        .tau        (synth.reverb.tau ),
-        .gain       (synth.reverb.gain),
-        .in         (mixer_out  ),
-        .out        (reverb_out)
-    );
+    // /* Reverb */
+    // reverberator_core u_reverberator_core(
+    //     .clk        (clk        ), // 18 MHz system clock
+    //     .sample_clk (sample_clk ),
+    //     .enable     (1'b1       ),
+    //     .rstn       (1'b1       ),
+    //     .tau        (synth.reverb.tau ),
+    //     .gain       (synth.reverb.gain),
+    //     .in         (mixer_out  ),
+    //     .out        (reverb_out)
+    // );
     
 
     /* Pan */
@@ -382,8 +382,8 @@ module top(
     dac_transmitter #(.WIDTH(`SAMPLE_WIDTH)) transmitter0(
         .clk(sclk),
         .enable(locked),
-        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(reverb_out)),
-        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(reverb_out)),
+        .left_data(`FIXED_POINT_TO_SAMPLE_WIDTH(mixer_out)),
+        .right_data(`FIXED_POINT_TO_SAMPLE_WIDTH(mixer_out)),
 
         .lrclk(lrclk),  // Left right channel select
         .sd(sd)
