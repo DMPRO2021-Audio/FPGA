@@ -8,10 +8,12 @@ source [file join $scripts_dir env_setup.tcl]
 
 # Synthesis
 # -verilog_define DEBUG=1
-synth_design -name $design_name -top top -part $ARTYA735T
+puts $chip_v
+synth_design -name $design_name -top top -part $chip_v
 # Write checkpoint and report
 write_checkpoint -force $output_dir/post_synth
 report_utilization -file $output_dir/post_synth_util.rpt
+report_utilization -hierarchical -hierarchical_depth 10 -append -file $output_dir/post_synth_util.rpt
 report_timing -sort_by group -max_paths 5 -path_type summary -file $output_dir/post_synth_timing.rpt
 
 if {$synth_only == 1} { exit 0 }
@@ -19,11 +21,12 @@ if {$synth_only == 1} { exit 0 }
 # Debug ILA cores
 # source [file join $scripts_dir insert_ila.tcl]
 # Optimize
-opt_design
-power_opt_design
-report_utilization -file $output_dir/post_synth_opt_util.rpt
-report_utilization -hierarchical -hierarchical_depth 10 -append -file $output_dir/post_synth_opt_util.rpt
-
+if {$opt > 0} {
+    opt_design
+    power_opt_design
+    report_utilization -file $output_dir/post_synth_opt_util.rpt
+    report_utilization -hierarchical -hierarchical_depth 10 -append -file $output_dir/post_synth_opt_util.rpt
+}
 # Placement
 place_design
 # Write checkpoint

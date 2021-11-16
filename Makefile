@@ -33,16 +33,21 @@ INCLUDES 		= --include $(SRC)
 SV_DEFINES 		= -d DEBUG
 
 # Optionally set optimisation
-ifndef OPT
-	OPT=0
-endif
+OPT ?=0
 
 ifdef GUI
 	GUI=-gui -view $(BUILD)/$@_waves.wcfg
 endif
 
-ifdef DEVKIT
-	ON_DEVKIT=1
+DEVKIT ?=0
+SYNTH_ONLY ?=0
+ARTY ?=35T
+
+# Using "wrong" package (icsg324 vs ftg256), but keeping it consistent masks the error.
+ifeq ($(ARTY), 35T)
+	CHIP_VERSION="xc7a35ticsg324-1L"
+else ($(ARTY), 100T)
+	CHIP_VERSION="xc7a100ticsg324-1L"
 endif
 
 all: synth
@@ -266,7 +271,9 @@ TCL_ARGS = \
 	$(SYNTH_DIR) \
 	$(BUILD_DIR) \
 	$(SYNTH_ONLY) \
-	$(ON_DEVKIT)
+	$(DEVKIT) \
+	$(OPT) \
+	$(CHIP_VERSION)
 
 # Synthesise and generate bistream
 synth:
@@ -277,8 +284,8 @@ synth:
 		-source scripts/build.tcl \
 		-journal $(SYNTH_DIR)/vivado_build.jou \
 		-log $(SYNTH_DIR)/vivado_build.log \
-		-tclargs $(TCL_ARGS) \
-		-tempDir $(TEMP_DIR)
+		-tempDir $(TEMP_DIR) \
+		-tclargs $(TCL_ARGS)
 
 # Flash bitstream to FPGA
 flash: $(BUILD_DIR)/program.bit
@@ -288,8 +295,8 @@ flash: $(BUILD_DIR)/program.bit
 		-source scripts/program.tcl \
 		-journal $(FLASH_DIR)/vivado_program_$(shell date +"%y%m%d%H%M").jou \
 		-log $(FLASH_DIR)/vivado_program_$(shell date +"%y%m%d%H%M").log \
-		-tclargs $(TCL_ARGS) \
-		-tempDir $(TEMP_DIR)
+		-tempDir $(TEMP_DIR) \
+		-tclargs $(TCL_ARGS)
 
 vivado:
 	-mkdir -p $(BUILD_DIR)
@@ -299,8 +306,8 @@ vivado:
 		-source scripts/env_setup.tcl \
 		-journal $(SYNTH_DIR)/vivado_build.jou \
 		-log $(SYNTH_DIR)/vivado_build.log \
-		-tclargs $(TCL_ARGS) \
-		-tempDir $(TEMP_DIR)
+		-tempDir $(TEMP_DIR) \
+		-tclargs $(TCL_ARGS)
 
 ### UTILS ###
 
@@ -321,7 +328,11 @@ help:
 	@echo "Build testbench:        make tb_<module>"
 	@echo "Build single module:    make $(TS)<module>"
 	@echo "========================================================================================"
-	@echo "OPT=[0-3]               Set optimization level (OPT='$(OPT)')"
+	@echo "OPT=[0-3]               Set optimization level. For FPGA, turn optimization on or off (OPT='$(OPT)')"
+	@echo "ARTY=[35T|100T]         Select FPGA (ARTY='$(ARTY)')"
+	@echo "DEVKIT                  Define to tell development board is used (DEVKIT='$(DEVKIT)')"
+	@echo "GUI                     Define to add GUI flag, needed for waveform generation (GUI='$(GUI)')"
+	@echo "SYNTH_ONLY              Define to stop after synthesis (SYNTH_ONLY='$(SYNTH_ONLY)')"
 
 clean:
 	-rm -r xsim.dir

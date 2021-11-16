@@ -1,6 +1,6 @@
 # Program device
-puts "ILAs:"
-puts [get_hw_ilas]
+# puts "ILAs:"
+# puts [get_hw_ilas]
 
 set output_dir [lindex $argv 4]
 open_hw_manager
