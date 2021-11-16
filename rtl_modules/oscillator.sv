@@ -26,17 +26,20 @@ module oscillator
 );
 
     logic [$clog2(`SAMPLE_RATE / 1000):0] ms_counter [N_WAVEGENS] = '{default: 0};
-
     logic signed [16:0] envelope_gain [N_WAVEGENS] = '{default: 0};
     logic [31:0] duration_in_step [N_WAVEGENS] = '{default: 0};
     logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step [N_WAVEGENS] = '{default: 0};
     logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index [N_WAVEGENS] = '{default: 0};
     
-    logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val = 0;
-    assign out = (out_val * amplitude * envelope_gain[index]) >>> ((WIDTH-1) + (`FIXED_POINT)); //The bitshift is dividing by the max amplitude
+    logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val [N_WAVEGENS] = '{default: 0};
+    assign out = (out_val[index] * amplitude * envelope_gain[index]) >>> ((WIDTH-1) + (`FIXED_POINT)); //The bitshift is dividing by the max amplitude
 
     logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)-1:0] rom_addr;
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data;
+
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] samples [N_WAVEGENS]; // Storage for rom_data 
+
+    assign rom_addr = (sample_index[index] >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)) + (`MAX_SAMPLES_PER_PERIOD * (shape - 2));
     
     // This ROM contains the sample values at the maximum amplitude
     // to maintain as much detail as possible in the sample
@@ -52,26 +55,22 @@ module oscillator
         //$display("Frequency [%d] = %d (%d)", index, freq, freq >> `FIXED_POINT);
             // The sample index is a fixed point value with the fexed point at `FIXED_POINT.
             // This is needed to be able to have decimal frequencies.
-            sample_index[index] <= (sample_index[index] + freq) % (`SAMPLE_RATE << `FIXED_POINT);    
+            samples[(index - 1) % N_WAVEGENS] <= rom_data;
+            sample_index[index] <= (sample_index[index] + freq) % (`SAMPLE_RATE << `FIXED_POINT);   
 
             case(shape)
                 SAWTOOTH: begin
-                    out_val <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * (sample_index[index] >> `FIXED_POINT)) - (`MAX_AMPLITUDE >> 1);
+                    out_val[index] <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * (sample_index[index] >> `FIXED_POINT)) - (`MAX_AMPLITUDE >> 1);
                 end
                 SQUARE: begin
-                    out_val <= (sample_index[index] >> `FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
+                    out_val[index] <= (sample_index[index] >> `FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
-                SIN: begin
-                    rom_addr <= (sample_index[index] >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT));       
-                    out_val <= rom_data;
-                end
-                PIANO: begin
-                    rom_addr <= (sample_index[index] >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)) + 3000;       
-                    out_val <= rom_data;
+                default: begin
+                    out_val[index] <= samples[index];
                 end
             endcase
         end else begin
-            out_val <= 0;
+            out_val[index] <= 0;
             sample_index[index] <= 0; 
             envelope_gain[index] <= 0;
         end
