@@ -13,7 +13,7 @@ create_clock -add -name sys_clk_pin -period 20.83 -waveform {0 5} [get_ports { M
 # Denote placement error to warning, highly discouraged
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {clk_IBUF_inst/O}]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {clk_wiz/clk_in_clk_wiz_0}]
-# set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets ck_sck_IBUF]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets spi_clk_IBUF]
 # set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets led1_r_OBUF]
 
 # Debug

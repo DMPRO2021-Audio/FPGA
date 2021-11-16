@@ -9,6 +9,8 @@ set synth_dir [lindex $argv 3]
 set output_dir [lindex $argv 4]
 set synth_only [lindex $argv 5]
 set devkit [lindex $argv 6]
+set opt [lindex $argv 7]
+set chip_v [lindex $argv 8]
 
 ### Assemble project ###
 
@@ -62,4 +64,5 @@ set_property IS_ENABLED FALSE [get_drc_checks UTLZ-2]
 ### Synthesis and implementation ###
 
 set ARTYA735T "xc7a35ticsg324-1L"
+set ARTYA7100T "xc7a100tftg256-1"
 set_param general.maxThreads 12
