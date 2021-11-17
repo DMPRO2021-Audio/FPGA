@@ -64,6 +64,7 @@ module control_unit (
                     synth.wave_gens[i].shape <= wave_shape'(input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN ]);
                     synth.wave_gens[i].cmds  <=             input_buffer[$bits(wavegen_t)*i+64+$bits(envelope_t) * `ENVELOPE_LEN+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*`ENVELOPE_LEN+8];
                 end else if (dirty_bit == 2 && synth.wave_gens[i].cmds[`ENVELOPE_RESET_BIT]) begin
+                    // Remove the envelope reset after one cycle
                     synth.wave_gens[i].cmds <= synth.wave_gens[i].cmds & ~(1 << `ENVELOPE_RESET_BIT);
                 end
             end
@@ -73,7 +74,7 @@ module control_unit (
         for (j = 0; j < `ENVELOPE_LEN; j=j+1) begin
             always_ff @( posedge sample_clk ) begin
                 if (spi_csn && dirty_bit == 1) begin
-                    synth.wave_gens[i].envelopes[j].gain     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j ];
+                    synth.wave_gens[i].envelopes[j].rate     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j ];
                     synth.wave_gens[i].envelopes[j].duration <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+15: $bits(wavegen_t)*i+64+$bits(envelope_t)*j+8 ];
                 end
             end

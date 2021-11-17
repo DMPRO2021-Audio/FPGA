@@ -5,7 +5,7 @@
 `endif
 
 `ifndef N_OSCILLATORS
-`define N_OSCILLATORS 8
+`define N_OSCILLATORS 32
 `endif
 
 `ifndef ENVELOPE_LEN

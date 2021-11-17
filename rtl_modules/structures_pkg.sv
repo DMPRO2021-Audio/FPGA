@@ -4,9 +4,9 @@
 package shape_pkg;
     typedef enum logic [7:0]{
         SAWTOOTH = 0,
-        SQUARE,         
-        SIN,           
-        PIANO
+        SQUARE = 1,         
+        SIN = 2,           
+        PIANO = 3
     } wave_shape;
 endpackage
 package protocol_pkg;
@@ -16,7 +16,7 @@ package protocol_pkg;
     import shape_pkg::*;
 
     typedef struct packed {
-        logic [7:0] gain /* FIXED POINT */;
+        logic signed [7:0] rate /* FIXED POINT */;
         logic [7:0] duration;
     } envelope_t;
 
@@ -74,7 +74,7 @@ package protocol_pkg;
             synth.wave_gens[i].velocity = 0;
             synth.wave_gens[i].cmds = 0;
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                synth.wave_gens[i].envelopes[ii].gain = 0;
+                synth.wave_gens[i].envelopes[ii].rate = 0;
                 synth.wave_gens[i].envelopes[ii].duration = 0;
             end
         end
@@ -99,8 +99,8 @@ package protocol_pkg;
             $display("\t\t.cmds: %x", synth.wave_gens[i].cmds);
             $display("\t\t.envelopes: [");
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                $display("\t\t\tenvelope_t { .gain: %x, .duration: %x }", 
-                    synth.wave_gens[i].envelopes[ii].gain, 
+                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
+                    synth.wave_gens[i].envelopes[ii].rate, 
                     synth.wave_gens[i].envelopes[ii].duration);
             end
             $display("\t\t]");
@@ -110,7 +110,7 @@ package protocol_pkg;
 `endif // def DEBUG
     endfunction
 
-    function print_wavegen_t(input wavegen_t wavegen);
+    function void print_wavegen_t(input wavegen_t wavegen);
             $display("\t.wavegen_t {");
             $display("\t\t.freq: %x", wavegen.freq);
             $display("\t\t.velocity: %x", wavegen.velocity);
@@ -118,8 +118,8 @@ package protocol_pkg;
             $display("\t\t.cmds: %x", wavegen.cmds);
             $display("\t\t.envelopes: [");
             for (int ii = 0; ii < `ENVELOPE_LEN; ii++) begin
-                $display("\t\t\tenvelope_t { .gain: %x, .duration: %x }", 
-                    wavegen.envelopes[ii].gain, 
+                $display("\t\t\tenvelope_t { .rate: %x, .duration: %x }", 
+                    wavegen.envelopes[ii].rate, 
                     wavegen.envelopes[ii].duration);
             end
             $display("\t\t]");
