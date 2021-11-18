@@ -6,7 +6,9 @@ package shape_pkg;
         SAWTOOTH = 0,
         SQUARE = 1,         
         SIN = 2,           
-        PIANO = 3
+        PIANO = 3,
+        PAN_FLUTE = 4,
+        GUITAR = 5
     } wave_shape;
 endpackage
 package protocol_pkg;

@@ -316,11 +316,11 @@ module top(
 
     logic [8:0] sample_clk_counter2 = 0;
     always_ff @ (posedge sys_clk) begin
-        sample_clk_counter2 <= sample_clk_counter2 + 1;
         if(sample_clk_counter2 < `N_OSCILLATORS) begin
             oscillator_index <= oscillator_index + 1;
             accumulator <= accumulator + wave;
         end
+        sample_clk_counter2 <= sample_clk_counter2 + 1;
 
         if(sample_clk_counter2 == `N_OSCILLATORS) begin
             mixer_out <= accumulator;
