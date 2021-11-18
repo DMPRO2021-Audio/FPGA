@@ -9,7 +9,8 @@ import protocol_pkg::*;
 
 module oscillator 
 #(
-    WIDTH = 24
+    WIDTH = 24,
+    N_WAVEGENS = `N_OSCILLATORS
 )
 (
     input logic clk,                      // Clock should be of the same sample frequency
@@ -19,20 +20,26 @@ module oscillator
     input envelope_t [0:`ENVELOPE_LEN-1] envelopes,
     input logic [WIDTH-1:0] amplitude,
     input wave_shape shape,
+    input logic [$clog2(N_WAVEGENS + 1)-1:0] index,
 
     output logic signed [WIDTH + `FIXED_POINT - 1:0] out
 );
 
-    logic [7:0] envelope_gain = 0;
-    logic [31:0] duration_in_step = 0;
-    logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step = 0;
-    logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index = 0;
+    logic [$clog2(`SAMPLE_RATE / 1000):0] ms_counter [N_WAVEGENS] = '{default: 0};
+    logic signed [16:0] envelope_gain [N_WAVEGENS] = '{default: 0};
+    logic [31:0] duration_in_step [N_WAVEGENS] = '{default: 0};
+    logic [$clog2(`ENVELOPE_LEN - 1) - 1:0] envelope_step [N_WAVEGENS] = '{default: 0};
+    logic [$clog2(`SAMPLE_RATE) + `FIXED_POINT:0] sample_index [N_WAVEGENS] = '{default: 0};
     
-    logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val = 0;
-    assign out = (out_val * amplitude * envelope_gain) >>> ((WIDTH-1) + `FIXED_POINT); //The bitshift is dividing by the max amplitude
+    logic signed [(WIDTH + `FIXED_POINT)*2-1:0] out_val [N_WAVEGENS] = '{default: 0};
+    assign out = (out_val[index] * amplitude * envelope_gain[index]) >>> ((WIDTH-1) + (`FIXED_POINT)); //The bitshift is dividing by the max amplitude
 
     logic [$clog2(`MAX_SAMPLES_PER_PERIOD * `N_WAVETABLES)-1:0] rom_addr;
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] rom_data;
+
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] samples [N_WAVEGENS]; // Storage for rom_data 
+
+    assign rom_addr = (sample_index[index] >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)) + (`MAX_SAMPLES_PER_PERIOD * (shape - 2));
     
     // This ROM contains the sample values at the maximum amplitude
     // to maintain as much detail as possible in the sample
@@ -44,59 +51,62 @@ module oscillator
     );
 
     always_ff @ (posedge(clk)) begin
-
-        if(enable) begin
+        if(enable && index < N_WAVEGENS) begin
+        //$display("Frequency [%d] = %d (%d)", index, freq, freq >> `FIXED_POINT);
             // The sample index is a fixed point value with the fexed point at `FIXED_POINT.
             // This is needed to be able to have decimal frequencies.
-            sample_index <= (sample_index + freq) % (`SAMPLE_RATE << `FIXED_POINT);    
+            samples[(index - 1) % N_WAVEGENS] <= rom_data;
+            sample_index[index] <= (sample_index[index] + freq) % (`SAMPLE_RATE << `FIXED_POINT);   
 
             case(shape)
                 SAWTOOTH: begin
-                    out_val <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * (sample_index >> `FIXED_POINT)) - (`MAX_AMPLITUDE >> 1);
+                    out_val[index] <= ((`MAX_AMPLITUDE / `SAMPLE_RATE) * (sample_index[index] >> `FIXED_POINT)) - (`MAX_AMPLITUDE >> 1);
                 end
                 SQUARE: begin
-                    out_val <= (sample_index >> `FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
+                    out_val[index] <= (sample_index[index] >> `FIXED_POINT) > (`SAMPLE_RATE >> 1) ? -(`MAX_AMPLITUDE >> 1) : `MAX_AMPLITUDE >> 1;
                 end
-                SIN: begin
-                    rom_addr <= (sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT));       
-                    out_val <= rom_data;
-                end
-                PIANO: begin
-                    rom_addr <= (sample_index >> ($clog2(`MIN_FREQUENCY) + `FIXED_POINT)) + 3000;       
-                    out_val <= rom_data;
+                default: begin
+                    out_val[index] <= samples[index];
                 end
             endcase
-
-            // Reset the envelope based on command bits
-            if(cmds[`ENVELOPE_RESET_BIT]) begin
-                envelope_step <= 0;
-                duration_in_step <= 0;
-            end else begin  
-                duration_in_step <= duration_in_step + 1;
-                if(duration_in_step >= envelopes[envelope_step].duration << `FIXED_POINT) begin
-                    if(envelope_step + 1 < `ENVELOPE_LEN) begin
-                        $display("GAIN = %d", envelopes[envelope_step].gain);
-                        envelope_step <= envelope_step + 1;
-                    end
-                    duration_in_step <= 0;
-                end
-            end
-
-            if(envelope_step < `ENVELOPE_LEN - 1) begin
-                
-                // This is done to not divide a negative number which would not
-                // work as rate is not set as a signed value
-                if(envelopes[envelope_step + 1].gain < envelopes[envelope_step].gain) begin
-                    envelope_gain <= envelopes[envelope_step].gain - duration_in_step * (envelopes[envelope_step].gain - envelopes[envelope_step + 1].gain) / (envelopes[envelope_step].duration << `FIXED_POINT);
-                end else begin
-                    envelope_gain <= envelopes[envelope_step].gain + duration_in_step * (envelopes[envelope_step + 1].gain - envelopes[envelope_step].gain) / (envelopes[envelope_step].duration << `FIXED_POINT);
-                end
-
-            end
-
         end else begin
-            out_val <= 0;
-            sample_index <= 0; 
+            out_val[index] <= 0;
+            sample_index[index] <= 0; 
+            envelope_gain[index] <= 0;
+        end
+
+        if(index < N_WAVEGENS) begin
+
+            if(cmds[`ENVELOPE_RESET_BIT]) begin
+                envelope_step[index] <= 0;
+                duration_in_step[index] <= 0;
+                envelope_gain[index] <= 0;
+            end
+
+            // Downscaling the envelope clock to milliseconds
+            ms_counter[index] <= ms_counter[index] + 1;
+            if(ms_counter[index] >= 23) begin
+                ms_counter[index] <= 0;
+                
+                if(!cmds[`ENVELOPE_RESET_BIT]) begin
+                    duration_in_step[index] <= duration_in_step[index] + 1;
+                    if(duration_in_step[index] >= envelopes[envelope_step[index]].duration) begin
+                        if(envelope_step[index] + 1 < `ENVELOPE_LEN) begin
+                            envelope_step[index] <= envelope_step[index] + 1;
+                        end
+                        duration_in_step[index] <= 0;
+                    end
+                    // Clamp the envelope gain within 255 and 0
+                    if(envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2) > 65535) begin
+                        envelope_gain[index] <= 65535;
+                    end else if (envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2) < 0) begin
+                        envelope_gain[index] <= 0;
+                    end else begin 
+                        envelope_gain[index] <= envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2);
+                    end
+                end
+            end
         end
     end
+
 endmodule
