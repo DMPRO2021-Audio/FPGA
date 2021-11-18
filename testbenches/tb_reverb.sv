@@ -8,7 +8,7 @@ import protocol_pkg::*;
 module tb_reverb;
     logic clk = 0;
     logic sample_clk = 0;
-    logic enable;
+    logic enable = 1;
     logic write = 1;
 
     localparam WIDTH = 24;
@@ -74,8 +74,7 @@ module tb_reverb;
     u_reverberator_core(
     	.clk    (clk    ),
     	.sample_clk(sample_clk),
-        .enable (1'b1 ),
-        .rstn   (1'b1   ),
+        .enable (enable),
         .tau    (tau    ),
         .gain   (gain   ),
         .in     (reverb_in),
@@ -153,7 +152,7 @@ module tb_reverb;
         $strobe("[tb_reverb] Playing %d", synth.wave_gens[1].freq);
         $strobe("[tb_reverb] Playing %d", synth.wave_gens[2].freq);
 
-        #4000;
+        #6000;
 
         fd = $fopen("./test_output/oscillator-reverb.txt", "w+");
 
@@ -169,6 +168,8 @@ module tb_reverb;
         synth.wave_gens[3].cmds <= 8'b11;
         synth.wave_gens[4].cmds <= 8'b11;
         synth.wave_gens[5].cmds <= 8'b11;
+
+        enable <= 0;
 
         // #200;
 
