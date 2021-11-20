@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "constants.svh"
+`include "constants.svh"    
 
 module mixer
 #(
@@ -8,31 +8,51 @@ module mixer
     N_WAVEGENS = `N_OSCILLATORS
 ) 
 (
-    input logic clk,                                        // Sample clock
-    input logic signed [WIDTH + `FIXED_POINT - 1:0] waves [N_WAVEGENS],      // N signals from the N wavegenerators
+    input logic sys_clk,                                    // System clock
+    input logic sample_clk,                                 // Sample clock
+    input logic signed [WIDTH + `FIXED_POINT - 1:0] wave,   // Wave signal from the oscillator
     input logic signed [31:0] master_volume,                // Master volume
-    input logic signed [31:0] num_enabled,                  // Number of wavegenerators which are enabled
+    input logic enabled,                                    // Control signal from the oscillator indicating that it is making waves 
+    input logic [$clog2(N_WAVEGENS+1)-1:0] index,           // Index of the current oscillator
+    input logic [8:0] clk_counter,
 
-    output logic signed [WIDTH + `FIXED_POINT - 1:0] out                     // Output: Sum of the waves
+
+    output logic signed [WIDTH + `FIXED_POINT - 1:0] out    // Output: Sum of the waves adjusted with master volume and amplitude coefficient
 );
 
-logic signed [WIDTH + `FIXED_POINT - 1:0] sum [N_WAVEGENS];
-logic signed [(WIDTH + `FIXED_POINT) * 2 - 1:0] scaling = 0;
+logic signed [WIDTH + `FIXED_POINT + $clog2(N_WAVEGENS):0] accumulator = 0; // Accumulater with room for overflow
+logic signed [WIDTH + `FIXED_POINT + $clog2(N_WAVEGENS) + `FIXED_POINT:0] sum = 0;
+logic signed [$clog2(N_WAVEGENS) + 1:0] num_enabled = 0;
 
-// This is quite inefficient and the critical path could be reduced 
-// by adding the numbers in a tournament/tree style 
-generate;
-    genvar i;
-    assign sum[0] = waves[0];
-    for(i = 1; i < N_WAVEGENS; i++) begin
-        assign sum[i] = sum[i-1] + waves[i];
+always_ff @(posedge sys_clk) begin
+    if(clk_counter < N_WAVEGENS) begin
+        accumulator <= accumulator + wave;
+        num_enabled <= num_enabled + enabled;
+
+        //$strobe("Accumulator = %d", accumulator);
+        //$strobe("N_enabled = %d", num_enabled);
     end
-endgenerate
 
-always_ff @(posedge clk) begin
-    // Sum and multiply with an amplitude coefficient
-    scaling <= sum[N_WAVEGENS-1] * master_volume * num_enabled / (num_enabled + 2);
-    out <= scaling >>> `FIXED_POINT;
+    if(clk_counter == N_WAVEGENS) begin
+        sum <= accumulator * master_volume * num_enabled / (num_enabled + 2) >>> `FIXED_POINT;
+        //$strobe("SUM = %d", sum);
+    end
+
+    if(clk_counter >= 383) begin
+        accumulator <= 0;
+        num_enabled <= 0;
+    end
+end
+
+always_ff @(posedge sample_clk) begin
+    // Clamp the output to avoid clipping
+    if(sum > int'((1 << (WIDTH + `FIXED_POINT - 1)) - 1)) begin
+        out <= 1 << (WIDTH + `FIXED_POINT - 1) - 1;
+    end else if (sum < int'(1 << (WIDTH + `FIXED_POINT - 1))) begin
+        out <= (1 << (WIDTH + `FIXED_POINT - 1));
+    end else begin
+        out <= sum;
+    end
 end
 
 endmodule
