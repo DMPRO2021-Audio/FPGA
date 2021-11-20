@@ -259,7 +259,7 @@ module top(
     /* Create correct clock on dev board */
     // logic locked = 1;
     // assign sys_clk = MASTER_CLK;
-    
+
     clk_wiz clk_wiz (
         .clk_in(MASTER_CLK),
         .reset(0),
@@ -280,7 +280,7 @@ module top(
         .sample_clk (sample_clk ),
         .synth      (synth      )
     );
-    
+
     /* Oscillators - Wave generation start */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
@@ -296,7 +296,7 @@ module top(
     ) oscillator(
         .clk(sys_clk),
         .enable(synth.wave_gens[oscillator_index].cmds[`WAVEGEN_ENABLE_BIT]),
-        .cmds(synth.wave_gens[oscillator_index].cmds), 
+        .cmds(synth.wave_gens[oscillator_index].cmds),
         .freq(synth.wave_gens[oscillator_index].freq),
         .envelopes(envelopes),
         .amplitude(24'(synth.wave_gens[oscillator_index].velocity)),
@@ -308,7 +308,7 @@ module top(
     /* Mixer */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] mixer_out;
-    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] accumulator = 0; 
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] accumulator = 0;
     logic signed [31:0] num_enabled;
 
     logic [8:0] sample_clk_counter2 = 0;
@@ -333,7 +333,7 @@ module top(
 
 
     /* Reverb */
-    
+
     // /* Example reverb values for "Large hall" effect */
     // initial synth.reverb.tau = '{
     //     3003, 3403, 3905, 4495, 241, 83
@@ -408,7 +408,7 @@ module top(
 
     always @(posedge sys_clk) begin
         sample_clk_counter <= sample_clk_counter + 1;
-        
+
         sclk_counter <= sclk_counter + 1;
 
         // Dividing the clock frequency by 384
