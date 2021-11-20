@@ -50,90 +50,97 @@ module reverberator_core #(
     parameter WIDTH    = 24,    // Integer width
     parameter MAXDELAY = `MAX_FILTER_FIFO_LENGTH
 ) (
-    // clk: system clock
-    // enable: ignored
-    // rstn: propagated/ingnored
-    input logic clk, sample_clk, enable, rstn,
+    // clk: system clock, ignored.
+    // sample_clk: sample clock (48kHz), used for all clocked instances in submodules
+    // enable: Enables input/output. If not pressed, output is 0 and input to submodules is 0.
+    input logic clk, sample_clk, enable,
 
     input logic signed [0:5][WIDTH+`FIXED_POINT-1:0] tau,   // Array of tau delay values
     input logic signed [0:6][WIDTH+`FIXED_POINT-1:0] gain, // Array of g gain values
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
-    output logic signed[WIDTH+`FIXED_POINT-1:0] out
+    output logic signed[WIDTH+`FIXED_POINT-1:0] out,
+    output logic signed[32*6-1:0] debug
 );
     localparam WORD = WIDTH + `FIXED_POINT;
-    logic signed [WORD-1:0] comb_out[`NCOMB] = '{default:0};
-    logic signed [WORD-1:0] allp_out[`NALLP] = '{default:0};
-    logic signed [WORD-1:0] comb_add;
+    logic signed [WORD-1:0] comb_out[`NCOMB];// = '{default:0};
+    logic signed [WORD-1:0] allp_out[3];// = '{default:0};
+    logic signed [WORD*2-1:0] allp_out2, g6inv, in_out;// = '{default:0};
+    logic signed [WORD*2-1:0] comb_add;
     logic signed [WORD-1:0] in_reg = 0;
-    logic signed [WORD-1:0] out_reg = 0;
-    logic signed [WORD-1:0] g6 = 0;
-    logic init = 0;
+    logic signed [WORD-1:0] out_reg;
+    logic signed [WORD-1:0] g6;
+    integer init = 0;
 
-    initial begin
+    logic [32*6-1:0] cdebugs[6];
+    assign debug = cdebugs[0]; //{out_reg, cdebugs[0]};
 
-    end
+
     generate;
         genvar i;
         for (i = 0; i < `NCOMB; ++i) begin
             /* Initialise comb filters */
             comb_filter #(
-                .WIDTH       (WIDTH     ),
-                .MAXDELAY   (MAXDELAY )   // As n * 0.02083 ms
+                .WIDTH      (WIDTH),
+                .MAXLEN     (MAXDELAY)      // As n * 0.02083 ms
             ) comb0 (
-                .clk        (clk   ),    // Ignored
+                .clk        (clk),          // Ignored
                 .sample_clk (sample_clk),
-                .rstn       (rstn  ),
-                .in         (in_reg    ),
-                .tau        (tau[i]   ),
-                .gain       (gain[i]  ),
-                .out        (comb_out[i])
+                .in         (in_reg),
+                .tau        (tau[i]),
+                .gain       (gain[i]),
+                .out        (comb_out[i]),
+                .debug (cdebugs[i])
             );
         end
     endgenerate
 
     allpass_filter #(
-        .WIDTH (WIDTH )
+        .WIDTH      (WIDTH),
+        .MAXLEN     (MAXDELAY)
     ) allpass0 (
-        .clk (clk),
+        .clk        (clk),                  // Ignored
         .sample_clk (sample_clk),
-        .rstn       (rstn  ),
-        .in         (comb_add),
+        .in         (comb_add[31:0]),
         .tau        (tau[4]),
         .gain       (gain[4]),
         .out        (allp_out[0])
     );
 
     allpass_filter #(
-        .WIDTH (WIDTH )
+        .WIDTH      (WIDTH),
+        .MAXLEN     (MAXDELAY)
     ) allpass1 (
-        .clk (clk),
+        .clk        (clk),                  // Ignored
         .sample_clk (sample_clk),
-        .rstn       (rstn  ),
         .in         (allp_out[0]),
         .tau        (tau[5]),
         .gain       (gain[5]),
         .out        (allp_out[1])
     );
 
-    assign comb_add = comb_out[0] + comb_out[1] + comb_out[2] + comb_out[3];
+    /* Divide by 4 to avoid clipping */
+    assign comb_add = (comb_out[0] + comb_out[1] + comb_out[2] + comb_out[3]) >>> 2;
 
-    // Should be safe as `gain < 1.0`
     assign out = out_reg;
 
     always_ff @( posedge sample_clk ) begin
         g6 <= gain[6];
-        if (init) begin
+        g6inv <= `REAL_TO_FIXED_POINT(1) - gain[6];
+        if (init > 64) begin
             if (enable) begin
-                // $display("[reverberator_core] in = %d comb_out = {%d, %d, %d, %d} allp_out = {%d, %d} gain[6] = %d out = %d",
-                //         in, comb_out[0], comb_out[1], comb_out[2], comb_out[3], allp_out[0], allp_out[1], gain[6], out_reg);
-                assert(!$isunknown(in)) else $error("[reverberator_core] Input value was unknown");
                 in_reg <= in;
-                out_reg <= in_reg + ((g6 * allp_out[1]) >>> `FIXED_POINT);
+                in_out <= (in * (`REAL_TO_FIXED_POINT(1.0)-g6)) >>> `FIXED_POINT;
+
+                assert(!$isunknown(in)) else $error("[reverberator_core] Input value was unknown");
+                assert(!$isunknown(out_reg)) else $error("[reverberator_core] Output value was unknown");
+
+                allp_out2 <= g6 * allp_out[1];
+                out_reg <= in_out[31:0] + ((allp_out2) >>> `FIXED_POINT);
             end
         end
         else begin
-            init <= 1;
+            init <= init + 1;
             in_reg <= 32'h0;
             out_reg <= 0;
         end

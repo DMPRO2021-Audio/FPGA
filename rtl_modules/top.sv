@@ -114,7 +114,7 @@ module top(
     /* Setup global synth varables */
     initial begin
         synth.pan.balance = `REAL_TO_FIXED_POINT(0);
-        synth.master_volume = `REAL_TO_FIXED_POINT(1);
+        synth.master_volume = `REAL_TO_FIXED_POINT(3);
     end
 
     /* Initialize oscillators */
@@ -122,7 +122,7 @@ module top(
         integer i;
 
         for(i = 0; i < `N_OSCILLATORS; i++) begin
-            synth.wave_gens[i].velocity = 5000;
+            synth.wave_gens[i].velocity = 0;
             synth.wave_gens[i].shape = SIN;
             synth.wave_gens[i].freq = 0;
             synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
@@ -130,41 +130,50 @@ module top(
             synth.wave_gens[i].envelopes[0].rate = 127;
             synth.wave_gens[i].envelopes[0].duration = 255;
 
-            synth.wave_gens[i].envelopes[1].rate = -30;
-            synth.wave_gens[i].envelopes[1].duration = 100;
+            synth.wave_gens[i].envelopes[1].rate = -20;
+            synth.wave_gens[i].envelopes[1].duration = 255;
 
-            synth.wave_gens[i].envelopes[2].rate = -20;
-            synth.wave_gens[i].envelopes[2].duration = 255;
+            synth.wave_gens[i].envelopes[2].rate = -10;
+            synth.wave_gens[i].envelopes[2].duration = 100;
 
-            synth.wave_gens[i].envelopes[3].rate = -10;
-            synth.wave_gens[i].envelopes[3].duration = 255;
+            synth.wave_gens[i].envelopes[3].rate = -5;
+            synth.wave_gens[i].envelopes[3].duration = 100;
 
-            synth.wave_gens[i].envelopes[4].rate = -5;
+            synth.wave_gens[i].envelopes[4].rate = 0;
             synth.wave_gens[i].envelopes[4].duration = 255;
 
-            synth.wave_gens[i].envelopes[5].rate = -80;
+            synth.wave_gens[i].envelopes[5].rate = 0;
             synth.wave_gens[i].envelopes[5].duration = 255;
 
-            synth.wave_gens[i].envelopes[6].rate = -80;
+            synth.wave_gens[i].envelopes[6].rate = 0;
             synth.wave_gens[i].envelopes[6].duration = 255;
 
-            synth.wave_gens[i].envelopes[7].rate = -4;
+            synth.wave_gens[i].envelopes[7].rate = -2;
             synth.wave_gens[i].envelopes[7].duration = 100;
         end
+        synth.wave_gens[0].velocity = 750;
+        synth.wave_gens[1].velocity = 700;
+        synth.wave_gens[2].velocity = 700;
+        synth.wave_gens[3].velocity = 700;
+        // synth.wave_gens[0].freq = 440 * 8;
     end
 
     /* Start 'O bli hos meg' polyphonic */
-    integer o_bli_hos_meg_p1[40] = '{31, 31, 29, 27, 34, 36, 34, 34, 32, 31, 31, 32, 34, 36, 34, 32, 29, 31, 33, 34, 31, 31, 29, 27, 34, 34, 32, 32, 31, 29, 29, 31, 32, 31, 29, 27, 32, 31, 29, 27 };
-    integer o_bli_hos_meg_l1[40] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  2,  2,  2,  2,  8 , 4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  4,  4,  8  };
-    integer o_bli_hos_meg_p2[40] = '{27, 26, 26, 27, 27, 24, 26, 27, 29, 27, 27, 27, 27, 27, 27, 27, 29, 27, 27, 26, 27, 26, 26, 27, 27, 27, 27, 28, 28, 29, 26, 27, 26, 27, 26, 24, 29, 27, 26, 22 };
+    integer o_bli_hos_meg_p1[41] = '{31, 31, 29, 27, 34, 36, 34, 34, 32, 31, 31, 32, 34, 36, 34, 32, 29, 31, 33, 34, 31, 31, 29, 27, 34, 34, 32, 32, 31, 29, 29, 31, 32, 31, 29, 27, 32, 31, 29, 27, 61 };
+    integer o_bli_hos_meg_l1[41] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  2,  2,  2,  2,  8 , 4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  4,  4,  4, 4  };
+    integer o_bli_hos_meg_p2[41] = '{27, 26, 26, 27, 27, 24, 26, 27, 29, 27, 27, 27, 27, 27, 27, 27, 29, 27, 27, 26, 27, 26, 26, 27, 27, 27, 27, 28, 28, 29, 26, 27, 26, 27, 26, 24, 29, 27, 26, 22, 61 };
     //integer o_bli_hos_meg_l2[40] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  2,  2,  2,  2,  8 , 4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  4,  4,  8  };
 
-    integer o_bli_hos_meg_p3[42] = '{22, 22, 20, 19, 15, 15, 22, 22, 22, 22, 22, 20, 19, 20, 19, 24, 22, 22, 15, 17, 19, 20, 22, 20, 19, 27, 26, 24, 24, 24, 22, 20, 22, 22, 22, 22, 20, 19, 24, 22, 20, 19 };
-    integer o_bli_hos_meg_l3[42] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  6,  2,  8  };
+    integer o_bli_hos_meg_p3[43] = '{22, 22, 20, 19, 15, 15, 22, 22, 22, 22, 22, 20, 19, 20, 19, 24, 22, 22, 15, 17, 19, 20, 22, 20, 19, 27, 26, 24, 24, 24, 22, 20, 22, 22, 22, 22, 20, 19, 24, 22, 20, 19, 61 };
+    integer o_bli_hos_meg_l3[43] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  6,  2,  4, 4  };
 
-    integer o_bli_hos_meg_p4[41] = '{15, 10, 10, 12, 7,  8,  10, 12, 14, 15, 15, 14, 12, 10, 8,  15, 17, 14, 15, 12, 10, 15, 10, 10, 12, 7,  8,  10, 12, 12, 17, 20, 19, 17, 15, 10, 12, 8,  10, 10, 15 };
-    integer o_bli_hos_meg_l4[41] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  2,  2,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  3,  1,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  4,  4,  8  };
+    integer o_bli_hos_meg_p4[42] = '{15, 10, 10, 12, 7,  8,  10, 12, 14, 15, 15, 14, 12, 10, 8,  15, 17, 14, 15, 12, 10, 15, 10, 10, 12, 7,  8,  10, 12, 12, 17, 20, 19, 17, 15, 10, 12, 8,  10, 10, 15, 61 };
+    integer o_bli_hos_meg_l4[42] = '{4,  2,  2,  4,  4,  2,  2,  2,  2,  8,  2,  2,  2,  2,  4,  4,  2,  2,  2,  2,  8,  4,  2,  2,  4,  4,  3,  1,  2,  2,  8,  4,  2,  2,  2,  2,  2,  2,  4,  4,  4, 4  };
     integer o_bli_hos_meg_tempo = 132;
+
+    integer reverb_testing_p[4] = '{24+12, 61, 31+12, 61};
+    integer reverb_testing_l[4] = '{1, 1, 1, 1};
+    integer reverb_testing_tempo = 200;
 
     integer counter1 = 0;
     integer counter2 = 0;
@@ -174,9 +183,19 @@ module top(
     integer idx3 = 0;
     /* End 'O bli hos meg' polyphonic */
     always @(posedge sample_clk) begin
+        // if (counter1 >= (`SAMPLE_RATE * 60 / reverb_testing_tempo) * reverb_testing_l[idx1]) begin
+        //     counter1 <= 0;
+        //     idx1 <= (idx1 + 1) % 4;
+        //     synth.wave_gens[0].cmds <= synth.wave_gens[0].cmds | 1 << `ENVELOPE_RESET_BIT;
+        // end
+        // else begin
+        //     synth.wave_gens[0].cmds <= synth.wave_gens[0].cmds & ~(1 << `ENVELOPE_RESET_BIT);
+        //     synth.wave_gens[0].freq <= n[reverb_testing_p[idx1]];
+        //     counter1 <= counter1 + 1;
+        // end
         if (counter1 >= (`SAMPLE_RATE * 60 / o_bli_hos_meg_tempo) * o_bli_hos_meg_l1[idx1]) begin
             counter1 <= 0;
-            idx1 <= (idx1 + 1) % 40;
+            idx1 <= (idx1 + 1) % 41;
             synth.wave_gens[0].cmds <= synth.wave_gens[0].cmds | 1 << `ENVELOPE_RESET_BIT;
             synth.wave_gens[1].cmds <= synth.wave_gens[1].cmds | 1 << `ENVELOPE_RESET_BIT;
         end
@@ -189,7 +208,7 @@ module top(
         end
         if (counter2 >= (`SAMPLE_RATE * 60 / o_bli_hos_meg_tempo) * o_bli_hos_meg_l4[idx2]) begin
             counter2 <= 0;
-            idx2 <= (idx2 + 1) % 41;
+            idx2 <= (idx2 + 1) % 42;
             synth.wave_gens[2].cmds <= synth.wave_gens[2].cmds | 1 << `ENVELOPE_RESET_BIT;
         end
         else begin
@@ -199,7 +218,7 @@ module top(
         end
         if (counter3 >= (`SAMPLE_RATE * 60 / o_bli_hos_meg_tempo) * o_bli_hos_meg_l3[idx3]) begin
             counter3 <= 0;
-            idx3 <= (idx3 + 1) % 42;
+            idx3 <= (idx3 + 1) % 43;
             synth.wave_gens[3].cmds <= synth.wave_gens[3].cmds | 1 << `ENVELOPE_RESET_BIT;
         end
         else begin
@@ -241,9 +260,8 @@ module top(
     /* Instantiate modules */
 
     /* Create correct clock on dev board */
-    /* logic locked = 1;
-    assign sys_clk = MASTER_CLK;
-     */
+    // logic locked = 1;
+    // assign sys_clk = MASTER_CLK;
 
     clk_wiz clk_wiz (
         .clk_in(MASTER_CLK),
@@ -254,7 +272,7 @@ module top(
 
 
     /* SPI transmission from MCU */
-    // /* Control unit - Interpret received signal */
+    /* Control unit - Interpret received signal */
 
      control_unit u_control_unit (
     	.spi_mosi   (spi_mosi   ),
@@ -265,7 +283,7 @@ module top(
         .sample_clk (sample_clk ),
         .synth      (synth      )
     );
-    
+
     /* Oscillators - Wave generation start */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
@@ -282,7 +300,7 @@ module top(
     ) oscillator(
         .clk(sys_clk),
         .enable(synth.wave_gens[oscillator_index].cmds[`WAVEGEN_ENABLE_BIT]),
-        .cmds(synth.wave_gens[oscillator_index].cmds), 
+        .cmds(synth.wave_gens[oscillator_index].cmds),
         .freq(synth.wave_gens[oscillator_index].freq),
         .envelopes(envelopes),
         .amplitude(24'(synth.wave_gens[oscillator_index].velocity)),
@@ -324,34 +342,20 @@ module top(
         .out(mixer_out)
     );
 
-    // integer reverb_out;
-    
-    // "Large hall"
-    // logic signed [31:0] tau[6] = {
-    //     3003, 3403, 3905, 4495, 241, 83
-    // };
-    // logic signed [31:0] gain[7] = {
-    //     `REAL_TO_FIXED_POINT(0.895),
-    //     `REAL_TO_FIXED_POINT(0.883),
-    //     `REAL_TO_FIXED_POINT(0.867),
-    //     `REAL_TO_FIXED_POINT(0.853),
-    //     `REAL_TO_FIXED_POINT(0.7),
-    //     `REAL_TO_FIXED_POINT(0.7),
-    //     `REAL_TO_FIXED_POINT(0.7)
-    // };
+    logic signed [31:0] reverb_out;
 
-    // /* Reverb */
-    // reverberator_core u_reverberator_core(
-    //     .clk        (clk        ), // 18 MHz system clock
-    //     .sample_clk (sample_clk ),
-    //     .enable     (1'b1       ),
-    //     .rstn       (1'b1       ),
-    //     .tau        (synth.reverb.tau ),
-    //     .gain       (synth.reverb.gain),
-    //     .in         (mixer_out  ),
-    //     .out        (reverb_out)
-    // );
-    
+    reverberator_core u_reverberator_core(
+        .clk        (clk        ), // 18 MHz system clock
+        .sample_clk (sample_clk ),
+        .enable     (1'b1       ),
+        .tau        (synth.reverb.tau ),
+        .gain       (synth.reverb.gain),
+        .in         (mixer_out),
+        .out        (reverb_out),
+        .debug(debug)
+    );
+
+
     /* Pan */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT-1: 0] left;
@@ -359,7 +363,7 @@ module top(
 
     pan #(.WIDTH(24)) pan(
         .clk(sample_clk),
-        .in(mixer_out),
+        .in(reverb_out), //(mixer_out)+fifo_out[0] + fifo_out[1] + fifo_out[2] + fifo_out[3]) >>> 2 ),
         .lr_weight(synth.pan.balance),
 
         .left(left),
@@ -398,7 +402,7 @@ module top(
 
     always @(posedge sys_clk) begin
         sample_clk_counter <= sample_clk_counter + 1;
-        
+
         sclk_counter <= sclk_counter + 1;
 
         // Dividing the clock frequency by 384
