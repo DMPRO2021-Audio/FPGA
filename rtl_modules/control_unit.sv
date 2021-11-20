@@ -70,7 +70,7 @@ module control_unit (
         for (j = 0; j < `ENVELOPE_LEN; j=j+1) begin
             always_ff @( posedge sample_clk ) begin
                 if (spi_csn && dirty_bit > 0) begin
-                    synth.wave_gens[i].envelopes[j].gain     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*j   ];
+                    synth.wave_gens[i].envelopes[j].rate     <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+7  : $bits(wavegen_t)*i+64+$bits(envelope_t)*j   ];
                     synth.wave_gens[i].envelopes[j].duration <= input_buffer[ $bits(wavegen_t)*i+64+$bits(envelope_t)*j+15 : $bits(wavegen_t)*i+64+$bits(envelope_t)*j+8 ];
                 end
             end

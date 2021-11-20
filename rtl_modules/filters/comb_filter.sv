@@ -16,42 +16,66 @@
 */
 module comb_filter #(
     parameter WIDTH = 24,   // Integer width
-    parameter MAXDELAY = 4096
+    parameter MAXLEN = `MAX_FILTER_FIFO_LENGTH,
+    parameter MID = 0       // Module ID for debug
 ) (
-    input logic clk, sample_clk, rstn,
+    input logic clk, sample_clk,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,       // Data in
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,// Tau and gain values
 
-    output logic signed [WIDTH+`FIXED_POINT-1:0] out
+    output logic signed [WIDTH+`FIXED_POINT-1:0] out,
+    output logic [32*6-1:0] debug
 );
     localparam WORD = WIDTH+`FIXED_POINT;
-    logic signed [WORD-1:0] t, g;
-    logic signed [WORD-1:0] out_node = 0;
-    logic signed [WORD-1:0] adder, mult = 0;
-    logic fifo_write; // Propagate write signal
-    logic [$clog2(2):0] counter;
+    logic signed [WORD-1:0] t = 0, g = 0;
+    logic signed [WORD-1:0] out_node, out_reg = 0;
+    logic signed [WORD-1:0] in_reg;
+    logic signed [WORD*2-1:0] adder, mult;
+    logic init = 0;
 
-    assign t = tau;
-    assign g = gain;
-    
-    initial $display("[allpass_filter] tau = %d gain = %d in = %d", tau, gain, in);
+    /* DEBUG */
+    logic [32*3-1:0] debug_fifo;
+    assign debug = {in_reg, adder, mult, debug_fifo};
+
+    initial begin
+        $display("[comb_filter] tau = %d gain = %d in = %d", tau, gain, in);
+    end
 
 
     fifo_delay_bram #(
-        .WIDTH  (WORD  ),
-        .MAXLEN (MAXDELAY)
+        .WIDTH      (WORD),
+        .MAXLEN     (MAXLEN)
     ) delay (
-        .clk    (clk),
-        .sample_clk    (sample_clk),
-        .rstn   (rstn),
-        .enable (1'b1),
-        .len    (t),
-        .in     (adder),
-        .out    (out_node)
+        .clk        (clk),
+        .sample_clk (sample_clk),
+        .enable     (1'b1),
+        .len        (t),
+        .in         (adder),
+        .out        (out_node),
+        .debug (debug_fifo)
     );
 
-    assign out = out_node;
-    assign adder = in + ((g * out_node) >>> `FIXED_POINT);
+    assign out = out_reg;
+
+    always_ff @( posedge sample_clk ) begin
+        t <= tau;
+        g <= gain;
+
+        if (init) begin
+            mult <= g * out_node;
+            in_reg <= in;
+            /* Divide by 2 to avoid clipping if both in and out_node are close to max amplitude */
+            adder <= (in_reg + (mult >>> `FIXED_POINT));
+            out_reg <= out_node;
+        end
+        else begin
+            init <= init + 1;
+            adder <= 0;
+            mult <= 0;
+            in_reg <= 0;
+            out_reg <= 0;
+        end
+    end
 
     always_ff @(posedge sample_clk)
         assert(!$isunknown(in)) else $error("[comb_filter] Input value was unknown");
