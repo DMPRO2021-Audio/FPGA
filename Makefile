@@ -43,10 +43,11 @@ DEVKIT ?=0
 SYNTH_ONLY ?=0
 ARTY ?=35T
 
+# Using "wrong" package (icsg324 vs ftg256), but keeping it consistent masks the error.
 ifeq ($(ARTY), 35T)
 	CHIP_VERSION="xc7a35ticsg324-1L"
 else ($(ARTY), 100T)
-	CHIP_VERSION="xc7a100tftg256-1"
+	CHIP_VERSION="xc7a100ticsg324-1L"
 endif
 
 all: synth
