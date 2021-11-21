@@ -30,7 +30,7 @@ top dut(
     .MASTER_CLK (clk ),
     .spi_mosi   (mosi),
     .spi_miso   (miso),
-    .spi_cs     (csel),
+    .spi_csn    (csel),
     .spi_clk    (sclk),
     .gpio       (gpio),
     .dac_data   (dac_data),
@@ -65,7 +65,10 @@ initial begin
 
     fd = $fopen("./test_output/oscillator.txt", "w+");
 
-    #200000000;    
+    for(int i = 0; i < 10; i++) begin
+        #100000000;
+        $display("%d/10", i+1);    
+    end
     $fclose(fd);
     
     $finish;
