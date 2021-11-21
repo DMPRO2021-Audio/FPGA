@@ -31,7 +31,7 @@
 `define ENVELOPE_RESET_BIT 0
 `define WAVEGEN_ENABLE_BIT 1
 
-`define N_WAVETABLES 2
+`define N_WAVETABLES 4
 `define SAMPLE_WIDTH 24             // Width of samples when sent to DAC
 `define FIXED_POINT 8               // Fixed decimal precision for internal computation
 // Convert and round a fixed precision decimal to a sample width int

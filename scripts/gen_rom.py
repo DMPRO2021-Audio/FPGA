@@ -1,17 +1,23 @@
 import numpy as np
 import sys
 
-if(len(sys.argv) < 3):
-    print("Missing args\n1 : Output path\n2: Input paths\n")
-    print("EX: python ./scripts/gen_rom.py ./rtl_modules/memory/wave_rom.v ./lookup_tables/sin_lut.txt ./lookup_tables/piano_lut.txt")
+if(len(sys.argv) < 2):
+    print("Missing args\n1 : Output path\n")
+    print("EX: python ./scripts/gen_rom.py ./rtl_modules/memory/wave_rom.v")
     exit(1)
 else:
     out_path = sys.argv[1]
-    in_path = sys.argv[2]
+
+luts = [
+    "sin_lut.txt",
+    "piano_lut.txt",
+    "pan_flute_lut.txt",
+    "guitar_lut.txt",
+]
 
 y = []
-for i in range(2, len(sys.argv), 1):
-    path = sys.argv[i]
+for i in range(len(luts)):
+    path = "./lookup_tables/" + luts[i]
     print(f"Loading: {path}")
     y_str = np.genfromtxt(path, delimiter=" ", dtype=str)
     for i in range(len(y_str)):
@@ -23,7 +29,7 @@ with open(out_path, 'w+') as file:
     data_width = int(np.ceil(np.log2(max(y))))
     
     file.write(f"""`timescale 1ns / 1ps
-    module rom (
+    module wave_rom (
     input clk,
     input en,
     input [{addr_width-1}:0] addr,

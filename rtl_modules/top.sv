@@ -124,6 +124,7 @@ module top(
         for(i = 0; i < `N_OSCILLATORS; i++) begin
             synth.wave_gens[i].velocity = 0;
             synth.wave_gens[i].shape = SIN;
+            synth.wave_gens[i].freq = 0;
             synth.wave_gens[i].cmds = 0 << `ENVELOPE_RESET_BIT | 1 << `WAVEGEN_ENABLE_BIT;
 
             synth.wave_gens[i].envelopes[0].rate = 127;
@@ -226,33 +227,35 @@ module top(
             counter3 <= counter3 + 1;
         end
     end
-    /* End sample tunes */
-/////////////
-`endif
+    `endif
 
-    /* Instantiate modules */
-
-    integer counter = 0;
-    logic half_clk = 0;
-    logic quarter_clk = 0;
-    logic [32*6-1:0] debug;
-    assign gpio[0] = sys_clk;
-    assign gpio[3] = sample_clk;
-    assign gpio[4] = spi_csn;
-    always_ff @( negedge sys_clk ) begin
-        if (!sample_clk) begin
-            //gpio[1] <= ~spi_csn;
-            gpio[1] <= counter <32*6 ? 0 : 1; // csn_out
-            //gpio[1] <= counter <$bits(synth_t) ? 0 : 1; // csn_out
-            gpio[2] <= counter <32*6 ? debug[counter] : 0;
-            //gpio[2] <= counter <$bits(synth_t) ? synth[counter] : 0;
-            //gpio[2] <= counter < $bits(synth_t) ? hard[counter] : 0;
-            counter <= (counter + 1);// % (32*4 + 32);
-        end else begin
-            counter <= 0;
-            gpio[1] <= 1;
-        end
-    end
+    //integer counter = 0;
+    //logic half_clk = 0;
+    //logic quarter_clk = 0; */
+    // assign gpio[0] = half_clk;
+    // assign gpio[4] = spi_csn;
+    // //assign gpio[2] = spi_mosi;
+    // always_ff @( negedge sys_clk ) begin
+    //     half_clk <= ~half_clk;
+    //     if (half_clk) begin
+    //         if (spi_csn) begin
+    //             gpio[1] <= ~spi_csn;
+    //             gpio[1] <= counter < $bits(synth_t) ? 0 : 1; // csn_out
+    //             gpio[2] <= counter < $bits(synth_t) ? synth[counter] : 0;
+    //             //gpio[2] <= counter < $bits(synth_t) ? hard[counter] : 0;
+    //             counter <= (counter + 1) % ($bits(synth_t) + 32);
+    //         end else begin
+    //             counter <= 0;
+    //             gpio[1] <= 1;
+    //         end 
+    //     end
+    // end
+    // assign gpio[3] = sample_clk;
+    // assign gpio[4] = sys_clk;
+    // assign gpio[5] = sys_clk;
+    // assign gpio[6] = sys_clk;
+    // assign gpio[7] = sys_clk;
+    // assign gpio = synth.wave_gens[0].freq[23:16];
 
     /* Instantiate modules */
 
@@ -271,7 +274,7 @@ module top(
     /* SPI transmission from MCU */
     /* Control unit - Interpret received signal */
 
-    control_unit u_control_unit (
+     control_unit u_control_unit (
     	.spi_mosi   (spi_mosi   ),
         .spi_clk    (spi_clk    ),
         .spi_csn    (spi_csn    ),
@@ -286,6 +289,7 @@ module top(
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] wave;
     logic [$clog2(`N_OSCILLATORS+1)-1:0] oscillator_index = 0;    // This is incremented at the end of the file
+    logic oscillator_enabled;
 
     envelope_t [0:`ENVELOPE_LEN-1] envelopes;
     assign envelopes = synth.wave_gens[oscillator_index].envelopes;
@@ -302,51 +306,41 @@ module top(
         .amplitude(24'(synth.wave_gens[oscillator_index].velocity)),
         .shape(synth.wave_gens[oscillator_index].shape),
         .index(oscillator_index),
-        .out(wave)
+        .out(wave),
+        .enabled(oscillator_enabled)
     );
-
-    /* Mixer */
-
-    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] mixer_out;
-    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] accumulator = 0;
-    logic signed [31:0] num_enabled;
 
     logic [8:0] sample_clk_counter2 = 0;
     always_ff @ (posedge sys_clk) begin
         sample_clk_counter2 <= sample_clk_counter2 + 1;
-        if(sample_clk_counter2 < `N_OSCILLATORS) begin
+        if(sample_clk_counter2 <= `N_OSCILLATORS) begin // Count one over the max index to 
             oscillator_index <= oscillator_index + 1;
-            accumulator <= accumulator + wave;
-        end
-
-        if(sample_clk_counter2 == `N_OSCILLATORS) begin
-            mixer_out <= accumulator;
         end
 
         if(sample_clk_counter2 >= 383) begin
             sample_clk_counter2 <= 0;
             oscillator_index <= 0;
-            //$strobe("Mixer = %d", mixer_out);
-            accumulator <= 0;
         end
     end
 
+    /* Mixer */
 
-    /* Reverb */
+    logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] mixer_out;
 
-    // /* Example reverb values for "Large hall" effect */
-    // initial synth.reverb.tau = '{
-    //     3003, 3403, 3905, 4495, 241, 83
-    // };
-    // initial synth.reverb.gain = '{
-    //     `REAL_TO_FIXED_POINT(0.895),
-    //     `REAL_TO_FIXED_POINT(0.883),
-    //     `REAL_TO_FIXED_POINT(0.867),
-    //     `REAL_TO_FIXED_POINT(0.853),
-    //     `REAL_TO_FIXED_POINT(0.7),
-    //     `REAL_TO_FIXED_POINT(0.7),
-    //     `REAL_TO_FIXED_POINT(0.5)
-    // };
+    mixer #(
+        .WIDTH(`SAMPLE_WIDTH),
+        .N_WAVEGENS(`N_OSCILLATORS)
+    ) mixer(
+        .sys_clk(sys_clk),
+        .sample_clk(sample_clk),
+        .wave(wave),
+        .master_volume(synth.master_volume),
+        .enabled(oscillator_enabled),
+        .index(oscillator_index),
+        .clk_counter(sample_clk_counter2),
+        
+        .out(mixer_out)
+    );
 
     logic signed [31:0] reverb_out;
 
@@ -422,19 +416,6 @@ module top(
             sclk_counter <= 0;
             sclk <= ~sclk;
         end
-    end
-
-    /* Count enabled oscillators */
-    logic [$clog2(`N_OSCILLATORS):0] num_enabled_count[`N_OSCILLATORS];
-    generate;
-        genvar i;
-        assign num_enabled_count[0] = synth.wave_gens[0].cmds[`WAVEGEN_ENABLE_BIT];
-        for (i = 1; i < `N_OSCILLATORS; i++) begin
-            assign num_enabled_count[i] = num_enabled_count[i-1] + synth.wave_gens[i].cmds[`WAVEGEN_ENABLE_BIT];
-        end
-    endgenerate
-    always_ff @(posedge sys_clk) begin
-        num_enabled <= num_enabled_count[`N_OSCILLATORS-1];
     end
 
 endmodule
