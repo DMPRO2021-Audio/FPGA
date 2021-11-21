@@ -41,13 +41,14 @@ endif
 
 DEVKIT ?=0
 SYNTH_ONLY ?=0
+FLASH ?=0
 ARTY ?=35T
 
 # Using "wrong" package (icsg324 vs ftg256), but keeping it consistent masks the error.
 ifeq ($(ARTY), 35T)
-	CHIP_VERSION="xc7a35ticsg324-1L"
+	CHIP_VERSION=xc7a35ticsg324-1L
 else ($(ARTY), 100T)
-	CHIP_VERSION="xc7a100ticsg324-1L"
+	CHIP_VERSION=xc7a100ticsg324-1L
 endif
 
 all: synth
@@ -273,6 +274,7 @@ TCL_ARGS = \
 	$(SYNTH_ONLY) \
 	$(DEVKIT) \
 	$(OPT) \
+	$(FLASH) \
 	$(CHIP_VERSION)
 
 # Synthesise and generate bistream
@@ -287,8 +289,8 @@ synth:
 		-tempDir $(TEMP_DIR) \
 		-tclargs $(TCL_ARGS)
 
-# Flash bitstream to FPGA
-flash: $(BUILD_DIR)/program.bit
+# Program bitstream to FPGA
+prog: $(BUILD_DIR)/$(PROJECT)-$(CHIP_VERSION).bit
 	-mkdir -p $(FLASH_DIR)
 	vivado \
 		-mode batch \
@@ -330,9 +332,10 @@ help:
 	@echo "========================================================================================"
 	@echo "OPT=[0-3]               Set optimization level. For FPGA, turn optimization on or off (OPT='$(OPT)')"
 	@echo "ARTY=[35T|100T]         Select FPGA (ARTY='$(ARTY)')"
-	@echo "DEVKIT                  Define to tell development board is used (DEVKIT='$(DEVKIT)')"
-	@echo "GUI                     Define to add GUI flag, needed for waveform generation (GUI='$(GUI)')"
-	@echo "SYNTH_ONLY              Define to stop after synthesis (SYNTH_ONLY='$(SYNTH_ONLY)')"
+	@echo "DEVKIT=[0|1]            Define to tell development board is used (DEVKIT='$(DEVKIT)')"
+	@echo "GUI=[0|1]               Define to add GUI flag, needed for waveform generation (GUI='$(GUI)')"
+	@echo "SYNTH_ONLY=[0|1]        Define to stop after synthesis (SYNTH_ONLY='$(SYNTH_ONLY)')"
+	@echo "FLASH=[0|1]             Define to program stable flash memory (FLASH='$(SYNTH_ONLY)')"
 
 clean:
 	-rm -r xsim.dir

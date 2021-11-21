@@ -1,18 +1,10 @@
+#
+# Environment setup for synthesis and interactive sessions
+#
+
 set scripts_dir [file dirname [info script]]
-
-# Get design name from arguments
-set design_name [lindex $argv 0]
-set source_dir [lindex $argv 1]
-set constr_dir [lindex $argv 2]
-set synth_dir [lindex $argv 3]
-# Get output directory from arguments
-set output_dir [lindex $argv 4]
-set synth_only [lindex $argv 5]
-set devkit [lindex $argv 6]
-set opt [lindex $argv 7]
-set chip_v [lindex $argv 8]
-
-set ip_dir $output_dir/ip/$chip_v
+# ! Add sources in env_setup.tcl
+source [file join $scripts_dir args_parse.tcl]
 
 # create_project -force -in_memory temp_proj
 # set_property part $chip_v [current_project]

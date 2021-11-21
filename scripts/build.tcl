@@ -51,4 +51,4 @@ write_xdc -no_fixed_only -force $output_dir/post_impl.xdc
 
 ### Generate bitstream ###
 
-write_bitstream -force -file $output_dir/program.bit
+write_bitstream -force -file $output_dir/$design_name-$chip_v.bit
