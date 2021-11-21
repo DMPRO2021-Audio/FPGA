@@ -26,7 +26,7 @@ module allpass_filter #(
     parameter MAXLEN = `MAX_FILTER_FIFO_LENGTH,
     parameter MID = 0 // Module ID
 ) (
-    input logic clk, sample_clk,
+    input logic sample_clk,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,
 
@@ -48,7 +48,6 @@ module allpass_filter #(
         .WIDTH  (WORD  ),
         .MAXLEN (MAXLEN )
     ) delay (
-        .clk    (clk),
         .sample_clk(sample_clk),
         .enable (1'b1 ),
         .len    (t      ),

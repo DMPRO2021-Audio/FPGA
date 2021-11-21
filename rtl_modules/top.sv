@@ -38,6 +38,7 @@ module top(
 
     initial sample_clk <= 1;
     initial sclk <= 1;
+    initial gpio <= 8'b00000000;
     initial $display("Size with %d oscillators and %d envelopes of synth_t: %d bits = %d Bytes", `N_OSCILLATORS, `ENVELOPE_LEN, $bits(synth_t), $bits(synth_t) / 8);
 
 `ifdef NODEF
@@ -279,7 +280,6 @@ module top(
         .spi_clk    (spi_clk    ),
         .spi_csn    (spi_csn    ),
         .spi_miso   (spi_miso   ),
-        .clk        (clk        ),
         .sample_clk (sample_clk ),
         .synth      (synth      )
     );
@@ -342,19 +342,18 @@ module top(
         .out(mixer_out)
     );
 
+    /* Reverb */
+
     logic signed [31:0] reverb_out;
 
     reverberator_core u_reverberator_core(
-        .clk        (clk        ), // 18 MHz system clock
         .sample_clk (sample_clk ),
         .enable     (1'b1       ),
         .tau        (synth.reverb.tau ),
         .gain       (synth.reverb.gain),
         .in         (mixer_out),
-        .out        (reverb_out),
-        .debug(debug)
+        .out        (reverb_out)
     );
-
 
     /* Pan */
 
@@ -363,7 +362,7 @@ module top(
 
     pan #(.WIDTH(24)) pan(
         .clk(sample_clk),
-        .in(reverb_out), //(mixer_out)+fifo_out[0] + fifo_out[1] + fifo_out[2] + fifo_out[3]) >>> 2 ),
+        .in(reverb_out),
         .lr_weight(synth.pan.balance),
 
         .left(left),
@@ -387,9 +386,7 @@ module top(
     assign dac_data = sd;      // Serial data
     assign dac_lr_clk = lrclk;   // Left right clock
 
-
     /* Define always blocks */
-
 
     /*
         Deriving the sample clock (48 KHz) and
@@ -402,7 +399,6 @@ module top(
 
     always @(posedge sys_clk) begin
         sample_clk_counter <= sample_clk_counter + 1;
-
         sclk_counter <= sclk_counter + 1;
 
         // Dividing the clock frequency by 384

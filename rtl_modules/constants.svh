@@ -43,4 +43,7 @@
 // A length of 1440 with sample rate as clock gives a delay of 30 ms
 `ifndef MAX_FILTER_FIFO_LENGTH
 `define MAX_FILTER_FIFO_LENGTH 1024 * 8
+`define ALLPASS1_FILTER_FIFO_LENGTH 256
+`define ALLPASS2_FILTER_FIFO_LENGTH 128
+`define COMB_FILTER_FIFO_LENGTH 4096
 `endif

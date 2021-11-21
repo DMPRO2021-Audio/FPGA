@@ -21,7 +21,7 @@ module control_unit (
     input logic spi_csn,
     output logic spi_miso,
     /* clocks */
-    input logic clk, sample_clk,
+    input logic sample_clk,
     /* outputs to system */
     output synth_t synth,
     output logic [8:0] debug
