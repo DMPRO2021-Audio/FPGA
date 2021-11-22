@@ -52,15 +52,6 @@ if {$perm_flash == 0} {
     
     startgroup 
     create_hw_bitstream -hw_device [lindex [get_hw_devices] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices] 0]]; program_hw_devices [lindex [get_hw_devices] 0]; refresh_hw_device [lindex [get_hw_devices] 0];
-    # INFO: [Labtools 27-3164] End of startup status: HIGH
-    # INFO: [Labtools 27-2302] Device xc7a35t (JTAG device index = 0) is programmed with a design that has 1 SPI core(s).
     program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices] 0]]
-    # Mfg ID : 1   Memory Type : 20   Memory Capacity : 18   Device ID 1 : 0   Device ID 2 : 0
-    # Performing Erase Operation...
-    # Erase Operation successful.
-    # Performing Program and Verify Operations...
-    # Program/Verify Operation successful.
-    # INFO: [Labtoolstcl 44-377] Flash programming completed successfully
-    program_hw_cfgmem: Time (s): cpu = 00:00:02 ; elapsed = 00:00:51 . Memory (MB): peak = 8434.078 ; gain = 2.000 ; free physical = 275 ; free virtual = 10250
     endgroup
 }
