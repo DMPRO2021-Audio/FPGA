@@ -9,19 +9,10 @@ module fifo_delay_bram #(
     input logic enable,
     input logic [31:0] len,
     input logic [WIDTH-1:0] in,
-    output logic [WIDTH-1:0] out = 0,
-    /* DEBUG */
-    output logic [32*3-1:0] debug
+    output logic [WIDTH-1:0] out = 0
 );
     logic [$clog2(MAXLEN)-1:0] ridx = 1, widx = 0, init = 0; // Read and write index, and init
     logic [WIDTH-1:0] out_reg, in_reg;
-
-    /* DEBUG */
-    logic [15:0] _ridx, _widx;
-    logic [31:0] rw;
-    assign _ridx = ridx;
-    assign _widx = widx;
-    assign rw = {_ridx[15:0], _widx[15:0]};
 
     BRAM_inst #(
         .DATA_WIDTH (WIDTH),
@@ -36,7 +27,6 @@ module fifo_delay_bram #(
     );
 
     always_ff @ ( posedge sample_clk ) begin
-        debug <= {in, out, rw};
         if (enable) begin
             widx <= (widx + 1) % len;
             ridx <= (widx + 2) % len;

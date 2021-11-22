@@ -19,12 +19,11 @@ module comb_filter #(
     parameter MAXLEN = `MAX_FILTER_FIFO_LENGTH,
     parameter MID = 0       // Module ID for debug
 ) (
-    input logic clk, sample_clk,
+    input logic sample_clk,
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,       // Data in
     input logic signed [WIDTH+`FIXED_POINT-1:0] tau, gain,// Tau and gain values
 
-    output logic signed [WIDTH+`FIXED_POINT-1:0] out,
-    output logic [32*6-1:0] debug
+    output logic signed [WIDTH+`FIXED_POINT-1:0] out
 );
     localparam WORD = WIDTH+`FIXED_POINT;
     logic signed [WORD-1:0] t = 0, g = 0;
@@ -32,10 +31,6 @@ module comb_filter #(
     logic signed [WORD-1:0] in_reg;
     logic signed [WORD*2-1:0] adder, mult;
     logic init = 0;
-
-    /* DEBUG */
-    logic [32*3-1:0] debug_fifo;
-    assign debug = {in_reg, adder, mult, debug_fifo};
 
     initial begin
         $display("[comb_filter] tau = %d gain = %d in = %d", tau, gain, in);
@@ -46,13 +41,11 @@ module comb_filter #(
         .WIDTH      (WORD),
         .MAXLEN     (MAXLEN)
     ) delay (
-        .clk        (clk),
         .sample_clk (sample_clk),
         .enable     (1'b1),
         .len        (t),
         .in         (adder),
-        .out        (out_node),
-        .debug (debug_fifo)
+        .out        (out_node)
     );
 
     assign out = out_reg;

@@ -53,14 +53,13 @@ module reverberator_core #(
     // clk: system clock, ignored.
     // sample_clk: sample clock (48kHz), used for all clocked instances in submodules
     // enable: Enables input/output. If not pressed, output is 0 and input to submodules is 0.
-    input logic clk, sample_clk, enable,
+    input logic sample_clk, enable,
 
     input logic signed [0:5][WIDTH+`FIXED_POINT-1:0] tau,   // Array of tau delay values
     input logic signed [0:6][WIDTH+`FIXED_POINT-1:0] gain, // Array of g gain values
 
     input logic signed [WIDTH+`FIXED_POINT-1:0] in,
-    output logic signed[WIDTH+`FIXED_POINT-1:0] out,
-    output logic signed[32*6-1:0] debug
+    output logic signed[WIDTH+`FIXED_POINT-1:0] out
 );
     localparam WORD = WIDTH + `FIXED_POINT;
     logic signed [WORD-1:0] comb_out[`NCOMB];// = '{default:0};
@@ -72,34 +71,27 @@ module reverberator_core #(
     logic signed [WORD-1:0] g6;
     integer init = 0;
 
-    logic [32*6-1:0] cdebugs[6];
-    assign debug = cdebugs[0]; //{out_reg, cdebugs[0]};
-
-
     generate;
         genvar i;
         for (i = 0; i < `NCOMB; ++i) begin
             /* Initialise comb filters */
             comb_filter #(
                 .WIDTH      (WIDTH),
-                .MAXLEN     (MAXDELAY)      // As n * 0.02083 ms
+                .MAXLEN     (`COMB_FILTER_FIFO_LENGTH)      // As n * 0.02083 ms
             ) comb0 (
-                .clk        (clk),          // Ignored
                 .sample_clk (sample_clk),
                 .in         (in_reg),
                 .tau        (tau[i]),
                 .gain       (gain[i]),
-                .out        (comb_out[i]),
-                .debug (cdebugs[i])
+                .out        (comb_out[i])
             );
         end
     endgenerate
 
     allpass_filter #(
         .WIDTH      (WIDTH),
-        .MAXLEN     (MAXDELAY)
+        .MAXLEN     (`ALLPASS1_FILTER_FIFO_LENGTH)
     ) allpass0 (
-        .clk        (clk),                  // Ignored
         .sample_clk (sample_clk),
         .in         (comb_add[31:0]),
         .tau        (tau[4]),
@@ -109,9 +101,8 @@ module reverberator_core #(
 
     allpass_filter #(
         .WIDTH      (WIDTH),
-        .MAXLEN     (MAXDELAY)
+        .MAXLEN     (`ALLPASS2_FILTER_FIFO_LENGTH)
     ) allpass1 (
-        .clk        (clk),                  // Ignored
         .sample_clk (sample_clk),
         .in         (allp_out[0]),
         .tau        (tau[5]),

@@ -102,12 +102,12 @@ module oscillator
                         end
 
                         // Clamp the envelope gain within 255 and 0
-                        if(envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2) > 65535) begin
+                        if(envelope_gain[index] + (envelopes[envelope_step[index]].rate) > 65535) begin
                             envelope_gain[index] <= 65535;
-                        end else if (envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2) < 0) begin
+                        end else if (envelope_gain[index] + (envelopes[envelope_step[index]].rate) < 0) begin
                             envelope_gain[index] <= 0;
                         end else begin 
-                            envelope_gain[index] <= envelope_gain[index] + (envelopes[envelope_step[index]].rate <<< 2);
+                            envelope_gain[index] <= envelope_gain[index] + (envelopes[envelope_step[index]].rate);
                         end
                     end
                 end
