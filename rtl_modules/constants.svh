@@ -30,6 +30,7 @@
 
 `define ENVELOPE_RESET_BIT 0
 `define WAVEGEN_ENABLE_BIT 1
+`define ENVELOPE_ENABLE_BIT 2
 
 `define N_WAVETABLES 4
 `define SAMPLE_WIDTH 24             // Width of samples when sent to DAC
