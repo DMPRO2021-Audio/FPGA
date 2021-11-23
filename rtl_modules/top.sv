@@ -41,7 +41,7 @@ module top(
     initial gpio <= 8'b00000000;
     initial $display("Size with %d oscillators and %d envelopes of synth_t: %d bits = %d Bytes", `N_OSCILLATORS, `ENVELOPE_LEN, $bits(synth_t), $bits(synth_t) / 8);
 
-`ifdef NODEF
+`ifdef NO_MCU
     /* Note values C3 to B5 */
     integer n[62];
     initial n = '{
@@ -228,7 +228,7 @@ module top(
             counter3 <= counter3 + 1;
         end
     end
-    `endif
+`endif
 
     //integer counter = 0;
     //logic half_clk = 0;
@@ -261,20 +261,21 @@ module top(
     /* Instantiate modules */
 
     /* Create correct clock on dev board */
-    // logic locked = 1;
-    // assign sys_clk = MASTER_CLK;
-
+`ifdef SIM
+    logic locked = 1;
+    assign sys_clk = MASTER_CLK;
+`else
     clk_wiz clk_wiz (
         .clk_in(MASTER_CLK),
         .reset(0),
         .clk_out(sys_clk),
         .locked(locked)
     );
-
+`endif
 
     /* SPI transmission from MCU */
     /* Control unit - Interpret received signal */
-
+`ifndef NO_MCU
      control_unit u_control_unit (
     	.spi_mosi   (spi_mosi   ),
         .spi_clk    (spi_clk    ),
@@ -283,7 +284,7 @@ module top(
         .sample_clk (sample_clk ),
         .synth      (synth      )
     );
-
+`endif
     /* Oscillators - Wave generation start */
 
     logic signed [`SAMPLE_WIDTH + `FIXED_POINT - 1:0] waves [`N_OSCILLATORS];

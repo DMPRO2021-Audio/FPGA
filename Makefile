@@ -29,7 +29,7 @@ COMMON_DEPS 	= $(TS)structures_pkg
 WORKLIB_NAME 	= work
 WORKLIB 		= -work $(WORKLIB_NAME)
 WORKLIB_XELAB 	= -L $(WORKLIB_NAME)
-INCLUDES 		= --include $(SRC)
+INCLUDES 		= --include $(SRC) -d SIM -d NO_MCU
 SV_DEFINES 		= -d DEBUG
 
 # Optionally set optimisation
