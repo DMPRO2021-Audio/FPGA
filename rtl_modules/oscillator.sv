@@ -84,7 +84,7 @@ module oscillator
                 if(cmds[`ENVELOPE_RESET_BIT]) begin
                     envelope_step[index] <= 0;
                     duration_in_step[index] <= 0;
-                    envelope_gain[index] <= 0;
+                    //envelope_gain[index] <= 0;
                 end
 
                 // Downscaling the envelope clock to milliseconds
