@@ -311,6 +311,8 @@ vivado:
 		-tempDir $(TEMP_DIR) \
 		-tclargs $(TCL_ARGS)
 
+vivado-die:
+	-for p in  $(ps aux | grep Xilinx | cut -c9-16); do kill $p; done
 ### UTILS ###
 
 # Initialise directories that might have been deleted
